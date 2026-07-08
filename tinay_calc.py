@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import requests
 import time
+import io
 
 # APP CONFIGURATION
 st.set_page_config(page_title="Tinay's Price Calculator", page_icon="🧮", layout="centered")
@@ -12,10 +13,13 @@ tab1, tab2 = st.tabs(["📝 Price Calculator", "📊 Price Master List"])
 
 # --- LIVE REFRESHING GOOGLE SHEETS VIEW ---
 sheet_id = "14XUh3otWt1EoVM3RuLPceHhAaKF5iigOQO44mMcN2Fo"
-csv_url = f"https://google.com{sheet_id}/export?format=csv&t={int(time.time())}"
+# Uses the Visualization API endpoint and a timestamp to bypass caching and script blockades
+csv_url = f"https://google.com{sheet_id}/gviz/tq?tqx=out:csv&t={int(time.time())}"
 
 try:
-    df_master = pd.read_csv(csv_url)
+    headers = {"User-Agent": "Mozilla/5.0"}
+    response = requests.get(csv_url, headers=headers)
+    df_master = pd.read_csv(io.StringIO(response.text))
     df_master.columns = df_master.columns.str.strip()
 except Exception as e:
     df_master = pd.DataFrame(columns=["Product Name", "Capital Cost", "Markup", "Profit", "Selling Price"])
@@ -61,7 +65,7 @@ def confirm_save_dialog(prod_name, capital, markup, profit, retail_price):
 with tab1:
     st.subheader("Compute Product Pricing")
     
-    # Kept normal layout instead of st.form to cleanly show live metrics as you type
+    # Form layout removed so values calculate and display dynamically
     prod_name = st.text_input("Product Name", placeholder="e.g., Shampoo, Noodles, Soap")
     
     col1, col2 = st.columns(2)
@@ -86,7 +90,7 @@ with tab1:
     
     if submit_btn:
         if prod_name.strip():
-            # Triggers the popup modal instead of sending the webhook directly
+            # Intercepts the workflow and triggers confirmation window
             confirm_save_dialog(prod_name, capital, markup, profit, retail_price)
         else:
             st.warning("Please type a valid Product Name before saving.")
