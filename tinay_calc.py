@@ -12,24 +12,14 @@ tab1, tab2 = st.tabs(["📝 Price Calculator", "📊 Price Master List"])
 
 # --- LIVE REFRESHING GOOGLE SHEETS VIEW ---
 sheet_id = "14XUh3otWt1EoVM3RuLPceHhAaKF5iigOQO44mMcN2Fo"
-# UPDATED: Switched to the bulletproof Google Visualization endpoint to bypass login page blocks
-csv_url = f"https://google.com{sheet_id}/gviz/tq?tqx=out:csv&t={int(time.time())}"
+# Appended an auto-updating time integer string to destroy old browser caches
+csv_url = f"https://docs.google.com/spreadsheets/d/{sheet_id}/export?format=csv&t={int(time.time())}"
 
 try:
     df_master = pd.read_csv(csv_url)
     df_master.columns = df_master.columns.str.strip()
-    
-    # Clean up any blank/unnamed columns that Google's visual endpoint might send over
-    df_master = df_master.dropna(how='all', axis=1)
-    df_master = df_master.loc[:, ~df_master.columns.str.contains('^Unnamed')]
 except Exception as e:
     df_master = pd.DataFrame(columns=["Product Name", "Capital Cost", "Markup", "Profit", "Selling Price"])
-
-# Helper function to check if a product already exists case-insensitively
-def check_exists(name):
-    if not df_master.empty and "Product Name" in df_master.columns:
-        return name.strip().lower() in df_master["Product Name"].astype(str).str.strip().str.lower().values
-    return False
 
 # =========================================================
 # TAB 1: SMART PRICE CALCULATOR
@@ -58,63 +48,31 @@ with tab1:
         st.markdown("---")
         
         # ⚠️ REMEMBER TO REPLACE THIS WITH YOUR WEB APP URL GENERATED IN GOOGLE APPS SCRIPT:
-        WEBHOOK_URL = "https://google.com"
+        WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbwm0XqttmJPpzw7YvWoC0m7ehfGVcPjU9VphzxHT5Zh9zXeaZpYZJ8ulQ-9HvexVaxrhg/exec"
         
         submit_btn = st.form_submit_button("📥 Save to Master Price List", use_container_width=True)
         
         if submit_btn:
             if prod_name.strip():
-                st.session_state["pending_payload"] = {
-                    "action": "save",
-                    "product": prod_name.strip(),
+                payload = {
+                    "product": prod_name,
                     "capital": capital,
                     "markup": f"{markup}%",
                     "profit": profit,
                     "selling": retail_price
                 }
-                
-                if check_exists(prod_name):
-                    st.session_state["show_overwrite_dialog"] = True
-                    st.session_state["duplicate_product_name"] = prod_name.strip()
-                else:
-                    st.session_state["show_overwrite_dialog"] = False
-                    try:
-                        response = requests.post(WEBHOOK_URL, json=st.session_state["pending_payload"])
-                        if response.status_code == 200:
-                            st.toast(f"✅ Successfully saved '{prod_name}' directly to your Sheet!")
-                            time.sleep(0.5)
-                            st.rerun()
-                        else:
-                            st.error("Failed to connect to the database pipeline.")
-                    except Exception as e:
-                        st.error("Connection error. Make sure your Webhook URL is pasted correctly.")
-            else:
-                st.warning("Please type a valid Product Name before saving.")
-
-    # 🚨 INTERACTIVE OVERWRITE POPUP SYSTEM
-    if st.session_state.get("show_overwrite_dialog", False):
-        dup_name = st.session_state.get("duplicate_product_name", "This item")
-        st.markdown("---")
-        st.warning(f"⚠️ **Notice:** '{dup_name}' already exists in your Master Price List. Do you want to overwrite it?")
-        
-        choice_col1, choice_col2 = st.columns(2)
-        with choice_col1:
-            if st.button("Yes, Overwrite Existing", use_container_width=True, type="danger", key="confirm_overwrite_btn"):
                 try:
-                    response = requests.post(WEBHOOK_URL, json=st.session_state["pending_payload"])
+                    response = requests.post(WEBHOOK_URL, json=payload)
                     if response.status_code == 200:
-                        st.toast(f"🔄 Correctly updated '{dup_name}' in your Sheet!")
-                        st.session_state["show_overwrite_dialog"] = False
-                        time.sleep(0.5)
+                        st.toast(f"✅ Successfully saved '{prod_name}' directly to your Sheet!")
+                        time.sleep(0.5) # Short rest interval to allow Google servers to finalize row additions
                         st.rerun()
                     else:
-                        st.error("Failed to update entry.")
+                        st.error("Failed to connect to the database pipeline.")
                 except Exception as e:
-                    st.error("Connection error.")
-        with choice_col2:
-            if st.button("Cancel", use_container_width=True, key="cancel_overwrite_btn"):
-                st.session_state["show_overwrite_dialog"] = False
-                st.rerun()
+                    st.error("Connection error. Make sure your Webhook URL is pasted correctly.")
+            else:
+                st.warning("Please type a valid Product Name before saving.")
 
 # =========================================================
 # TAB 2: PRICE MASTER LIST
@@ -123,4 +81,5 @@ with tab2:
     if df_master.empty or len(df_master) == 0:
         st.info("Your list is currently empty or loading live entries...")
     else:
+        # Display the live table from your Google Sheet cleanly
         st.dataframe(df_master, use_container_width=True)
