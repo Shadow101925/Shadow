@@ -6,7 +6,7 @@ import io
 
 # APP CONFIGURATION
 st.set_page_config(page_title="Tinay's Price Calculator", page_icon="🧮", layout="centered")
-st.title("🧮 Tinay's Personal Retail Price Calculator")
+st.title("🮮 Tinay's Personal Retail Price Calculator")
 st.markdown("Calculate wholesale item prices and manage your master store retail price book.")
 
 tab1, tab2 = st.tabs(["📝 Price Calculator", "📊 Price Master List"])
@@ -26,12 +26,14 @@ except Exception as e:
 # --- POPUP CONFIRMATION DIALOG ---
 @st.dialog("Confirm Save to Master List")
 def confirm_save_dialog():
-    # Fetch values safely out of memory cache state
-    prod_name = st.session_state.get("save_prod_name", "")
-    capital = st.session_state.get("save_capital", 0.0)
-    markup = st.session_state.get("save_markup", 10.0)
-    profit = st.session_state.get("save_profit", 0.0)
-    retail_price = st.session_state.get("save_retail_price", 0.0)
+    # Safely pull values straight out of state-locked keys
+    prod_name = st.session_state.get("prod_name_key", "")
+    capital = st.session_state.get("capital_key", 0.0)
+    markup = st.session_state.get("markup_key", 10.0)
+    
+    # Calculate values directly inside the dialog to ensure fresh values
+    profit = capital * (markup / 100.0)
+    retail_price = capital + profit
 
     st.write(f"Are you sure you want to add **{prod_name}**?")
     st.write(f"💰 **Capital Cost:** ₱{capital:,.2f}")
@@ -59,6 +61,12 @@ def confirm_save_dialog():
                     response = requests.post(WEBHOOK_URL, json=payload)
                     if response.status_code == 200:
                         st.toast(f"✅ Successfully saved '{prod_name}'!")
+                        
+                        # Clear inputs out of memory so the next entry starts fresh
+                        st.session_state["prod_name_key"] = ""
+                        st.session_state["capital_key"] = 0.0
+                        st.session_state["markup_key"] = 10.0
+                        
                         time.sleep(1.0)
                         st.rerun()
                     else:
@@ -71,13 +79,14 @@ def confirm_save_dialog():
 with tab1:
     st.subheader("Compute Product Pricing")
     
-    prod_name = st.text_input("Product Name", placeholder="e.g., Shampoo, Noodles, Soap")
+    # CRITICAL FIX: Adding 'key' links inputs firmly to Streamlit's cache storage
+    prod_name = st.text_input("Product Name", placeholder="e.g., Shampoo, Noodles, Soap", key="prod_name_key")
     
     col1, col2 = st.columns(2)
     with col1:
-        capital = st.number_input("Capital Cost (₱)", min_value=0.0, step=1.0, value=0.0)
+        capital = st.number_input("Capital Cost (₱)", min_value=0.0, step=1.0, key="capital_key")
     with col2:
-        markup = st.number_input("Desired Markup (%)", min_value=0.0, step=1.0, value=10.0)
+        markup = st.number_input("Desired Markup (%)", min_value=0.0, step=1.0, key="markup_key")
         
     profit = capital * (markup / 100.0)
     retail_price = capital + profit
@@ -95,13 +104,6 @@ with tab1:
     
     if submit_btn:
         if prod_name.strip():
-            # Secure values inside state storage before opening dialog box
-            st.session_state["save_prod_name"] = prod_name
-            st.session_state["save_capital"] = capital
-            st.session_state["save_markup"] = markup
-            st.session_state["save_profit"] = profit
-            st.session_state["save_retail_price"] = retail_price
-            
             # Trigger confirmation window safely
             confirm_save_dialog()
         else:
