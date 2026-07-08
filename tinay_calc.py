@@ -48,7 +48,13 @@ with tab1:
         st.markdown("---")
         
         # ⚠️ REMEMBER TO REPLACE THIS WITH YOUR WEB APP URL GENERATED IN GOOGLE APPS SCRIPT:
-        WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbwQ51_OXtaAUFyAulaNx5Gf5LyA_m0ejSEuaxZzQehzwA4_WJFdLtNItMurZ_wusSyLjA/exec"
+        WEBHOOK_URL = "function doPost(e) {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  var data = JSON.parse(e.postData.contents);
+  sheet.appendRow([data.product, data.capital, data.markup, data.profit, data.selling]);
+  return ContentService.createTextOutput("Success");
+}
+"
         
         submit_btn = st.form_submit_button("📥 Save to Master Price List", use_container_width=True)
         
