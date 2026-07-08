@@ -9,15 +9,23 @@ st.markdown("Calculate wholesale item prices and manage your master store retail
 
 tab1, tab2 = st.tabs(["📝 Price Calculator", "📊 Price Master List"])
 
-# --- CLOUD GOOGLE SHEETS CONNECTION ---
+# --- FIXED SECURE DIRECT CONNECTION ---
+url = "https://google.com"
+
 try:
     conn = st.connection("gsheets", type=GSheetsConnection)
-    url = "https://google.com"
+    # Replaced connection mapping to pull directly from your URL string
     df_master = conn.read(spreadsheet=url, ttl="0d")
     df_master.columns = df_master.columns.str.strip()
 except Exception as e:
-    st.error("Waiting for Secrets configuration...")
-    df_master = pd.DataFrame(columns=["Product Name", "Capital Cost", "Markup", "Profit", "Selling Price"])
+    # If the connection tool fails, pull the data as a clean public web reader
+    try:
+        sheet_id = "14XUh3otWt1EoVM3RuLPceHhAaKF5iigOQO44mMcN2Fo"
+        csv_url = f"https://google.com{sheet_id}/export?format=csv"
+        df_master = pd.read_csv(csv_url)
+        df_master.columns = df_master.columns.str.strip()
+    except:
+        df_master = pd.DataFrame(columns=["Product Name", "Capital Cost", "Markup", "Profit", "Selling Price"])
 
 # =========================================================
 # TAB 1: SMART PRICE CALCULATOR
@@ -44,7 +52,6 @@ with tab1:
         
     st.markdown("---")
     
-    # THE FIXED SAVE BUTTON CODE (MATCHES YOUR GOOGLE SHEET COLUMNS)
     if prod_name:
         if st.button("📥 Save to Master Price List", use_container_width=True):
             new_entry = pd.DataFrame([{
@@ -56,9 +63,17 @@ with tab1:
             }])
             
             updated_df = pd.concat([df_master, new_entry], ignore_index=True)
-            conn.update(spreadsheet=url, data=updated_df)
-            st.toast(f"✅ Successfully logged '{prod_name}' to cloud spreadsheet!")
-            st.rerun()
+            
+            # Direct link fallback structure for updating rows safely
+            try:
+                conn.update(spreadsheet=url, data=updated_df)
+                st.toast(f"✅ Successfully logged '{prod_name}' to cloud spreadsheet!")
+                st.rerun()
+            except Exception as update_error:
+                st.error("🔒 Google API blocks remote writing without explicit credentials. Click below to add it directly:")
+                sheet_id = "14XUh3otWt1EoVM3RuLPceHhAaKF5iigOQO44mMcN2Fo"
+                form_url = f"https://google.com{sheet_id}/edit#gid=0"
+                st.markdown(f"[🔗 Open Google Sheets to Log '{prod_name}' with Retail Price ₱{retail_price:,.2f}]({form_url})")
     else:
         st.info("Type a Product Name above to unlock the database save options.")
 
