@@ -50,6 +50,26 @@ with tab1:
 
 # =========================================================
 # TAB 2: PRICE MASTER LIST
+    # Save option appears once product name is filled out
+    if prod_name:
+        if st.button("📥 Save to Master Price List", use_container_width=True):
+            # Create a clean new data row matching the spreadsheet columns
+            new_entry = pd.DataFrame([{
+                "Product Name": prod_name,
+                "Capital Cost": capital,
+                "Markup": f"{markup}%",
+                "Profit": profit,
+                "Final Retail Price": retail_price
+            }])
+            
+            # Combine current spreadsheet data rows with the new entry row
+            updated_df = pd.concat([df_master, new_entry], ignore_index=True)
+            
+            # Upload the combined rows directly back into your online Google Sheet
+            conn.update(data=updated_df)
+            st.toast(f"✅ Successfully logged '{prod_name}' to cloud spreadsheet data!")
+            st.rerun()
+
 with tab2:
     st.subheader("Your Cloud Price Master List")
     if df_master.empty:
