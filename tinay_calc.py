@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import requests
+import time
 
 # APP CONFIGURATION
 st.set_page_config(page_title="Tinay's Price Calculator", page_icon="🧮", layout="centered")
@@ -9,9 +10,10 @@ st.markdown("Calculate wholesale item prices and manage your master store retail
 
 tab1, tab2 = st.tabs(["📝 Price Calculator", "📊 Price Master List"])
 
-# --- LIVE GOOGLE SHEETS VIEW CONNECTION ---
+# --- LIVE REFRESHING GOOGLE SHEETS VIEW ---
 sheet_id = "14XUh3otWt1EoVM3RuLPceHhAaKF5iigOQO44mMcN2Fo"
-csv_url = f"https://google.com{sheet_id}/export?format=csv"
+# Appended an auto-updating time integer string to destroy old browser caches
+csv_url = f"https://docs.google.com/spreadsheets/d/{sheet_id}/export?format=csv&t={int(time.time())}"
 
 try:
     df_master = pd.read_csv(csv_url)
@@ -24,7 +26,6 @@ except Exception as e:
 with tab1:
     st.subheader("Compute Product Pricing")
     
-    # Created a secure form container block that manages auto-clearing input logic
     with st.form("calculator_form", clear_on_submit=True):
         prod_name = st.text_input("Product Name", placeholder="e.g., Shampoo, Noodles, Soap")
         
@@ -43,13 +44,12 @@ with tab1:
             st.metric(label="Profit per Unit", value=f"₱{profit:,.2f}")
         with res_col2:
             st.metric(label="Final Retail Selling Price", value=f"₱{retail_price:,.2f}")
-            
+        
         st.markdown("---")
         
-        # ⚠️ PASTE YOUR COPIED WEB APP URL INSIDE THE QUOTES BELOW:
+        # ⚠️ REMEMBER TO REPLACE THIS WITH YOUR WEB APP URL GENERATED IN GOOGLE APPS SCRIPT:
         WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbwQ51_OXtaAUFyAulaNx5Gf5LyA_m0ejSEuaxZzQehzwA4_WJFdLtNItMurZ_wusSyLjA/exec"
         
-        # Form submission trigger button
         submit_btn = st.form_submit_button("📥 Save to Master Price List", use_container_width=True)
         
         if submit_btn:
@@ -65,6 +65,7 @@ with tab1:
                     response = requests.post(WEBHOOK_URL, json=payload)
                     if response.status_code == 200:
                         st.toast(f"✅ Successfully saved '{prod_name}' directly to your Sheet!")
+                        time.sleep(0.5) # Short rest interval to allow Google servers to finalize row additions
                         st.rerun()
                     else:
                         st.error("Failed to connect to the database pipeline.")
@@ -72,3 +73,13 @@ with tab1:
                     st.error("Connection error. Make sure your Webhook URL is pasted correctly.")
             else:
                 st.warning("Please type a valid Product Name before saving.")
+
+# =========================================================
+# TAB 2: PRICE MASTER LIST
+with tab2:
+    st.subheader("Your Cloud Price Master List")
+    if df_master.empty or len(df_master) == 0:
+        st.info("Your list is currently empty or loading live entries...")
+    else:
+        # Display the live table from your Google Sheet cleanly
+        st.dataframe(df_master, use_container_width=True)
