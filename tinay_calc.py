@@ -24,55 +24,51 @@ except Exception as e:
 with tab1:
     st.subheader("Compute Product Pricing")
     
-    prod_name = st.text_input("Product Name", placeholder="e.g., Shampoo, Noodles, Soap")
-    
-    col1, col2 = st.columns(2)
-    with col1:
-        capital = st.number_input("Capital Cost (₱)", min_value=0.0, step=1.0, value=0.0)
-    with col2:
-        markup = st.number_input("Desired Markup (%)", min_value=0.0, step=1.0, value=10.0)
+    # Created a secure form container block that manages auto-clearing input logic
+    with st.form("calculator_form", clear_on_submit=True):
+        prod_name = st.text_input("Product Name", placeholder="e.g., Shampoo, Noodles, Soap")
         
-    profit = capital * (markup / 100.0)
-    retail_price = capital + profit
-    
-    st.markdown("---")
-    res_col1, res_col2 = st.columns(2)
-    with res_col1:
-        st.metric(label="Profit per Unit", value=f"₱{profit:,.2f}")
-    with res_col2:
-        st.metric(label="Final Retail Selling Price", value=f"₱{retail_price:,.2f}")
+        col1, col2 = st.columns(2)
+        with col1:
+            capital = st.number_input("Capital Cost (₱)", min_value=0.0, step=1.0, value=0.0)
+        with col2:
+            markup = st.number_input("Desired Markup (%)", min_value=0.0, step=1.0, value=10.0)
+            
+        profit = capital * (markup / 100.0)
+        retail_price = capital + profit
         
-    st.markdown("---")
-    
-    # ⚠️ PASTE YOUR COPIED WEB APP URL INSIDE THE QUOTES BELOW:
-    WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbwn8dPZgJgb4nVMI9tXzc4RidlCLGX2N5uILXCwl7OfxelXvU4ytC_89J4A3UQnG85cjQ/exec"
-    
-    if prod_name:
-        if st.button("📥 Save to Master Price List", use_container_width=True):
-            payload = {
-                "product": prod_name,
-                "capital": capital,
-                "markup": f"{markup}%",
-                "profit": profit,
-                "selling": retail_price
-            }
-            try:
-                response = requests.post(WEBHOOK_URL, json=payload)
-                if response.status_code == 200:
-                    st.success(f"✅ Successfully saved '{prod_name}' directly to your Sheet!")
-                    st.rerun()
-                else:
-                    st.error("Failed to connect to the database pipeline.")
-            except Exception as e:
-                st.error("Connection error. Make sure your Webhook URL is pasted correctly.")
-    else:
-        st.info("Type a Product Name above to unlock the database save options.")
-
-# =========================================================
-# TAB 2: PRICE MASTER LIST
-with tab2:
-    st.subheader("Your Cloud Price Master List")
-    if df_master.empty:
-        st.info("Your list is currently empty or loading...")
-    else:
-        st.dataframe(df_master, use_container_width=True)
+        st.markdown("---")
+        res_col1, res_col2 = st.columns(2)
+        with res_col1:
+            st.metric(label="Profit per Unit", value=f"₱{profit:,.2f}")
+        with res_col2:
+            st.metric(label="Final Retail Selling Price", value=f"₱{retail_price:,.2f}")
+            
+        st.markdown("---")
+        
+        # ⚠️ PASTE YOUR COPIED WEB APP URL INSIDE THE QUOTES BELOW:
+        WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbwQ51_OXtaAUFyAulaNx5Gf5LyA_m0ejSEuaxZzQehzwA4_WJFdLtNItMurZ_wusSyLjA/exec"
+        
+        # Form submission trigger button
+        submit_btn = st.form_submit_button("📥 Save to Master Price List", use_container_width=True)
+        
+        if submit_btn:
+            if prod_name.strip():
+                payload = {
+                    "product": prod_name,
+                    "capital": capital,
+                    "markup": f"{markup}%",
+                    "profit": profit,
+                    "selling": retail_price
+                }
+                try:
+                    response = requests.post(WEBHOOK_URL, json=payload)
+                    if response.status_code == 200:
+                        st.toast(f"✅ Successfully saved '{prod_name}' directly to your Sheet!")
+                        st.rerun()
+                    else:
+                        st.error("Failed to connect to the database pipeline.")
+                except Exception as e:
+                    st.error("Connection error. Make sure your Webhook URL is pasted correctly.")
+            else:
+                st.warning("Please type a valid Product Name before saving.")
