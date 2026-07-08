@@ -12,7 +12,7 @@ tab1, tab2 = st.tabs(["📝 Price Calculator", "📊 Price Master List"])
 
 # --- LIVE REFRESHING GOOGLE SHEETS VIEW ---
 sheet_id = "14XUh3otWt1EoVM3RuLPceHhAaKF5iigOQO44mMcN2Fo"
-csv_url = f"https://docs.google.com/spreadsheets/d/{sheet_id}/export?format=csv&t={int(time.time())}"
+csv_url = f"https://google.com{sheet_id}/export?format=csv&t={int(time.time())}"
 
 try:
     df_master = pd.read_csv(csv_url)
@@ -20,51 +20,76 @@ try:
 except Exception as e:
     df_master = pd.DataFrame(columns=["Product Name", "Capital Cost", "Markup", "Profit", "Selling Price"])
 
+# --- POPUP CONFIRMATION DIALOG ---
+@st.dialog("Confirm Save to Master List")
+def confirm_save_dialog(prod_name, capital, markup, profit, retail_price):
+    st.write(f"Are you sure you want to add **{prod_name}**?")
+    st.write(f"💰 **Capital Cost:** ₱{capital:,.2f}")
+    st.write(f"📈 **Markup:** {markup}%")
+    st.write(f"💵 **Profit:** ₱{profit:,.2f}")
+    st.write(f"🎯 **Selling Price:** ₱{retail_price:,.2f}")
+    
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("❌ Cancel", use_container_width=True):
+            st.rerun()
+    with col2:
+        if st.button("🔥 Confirm & Save", type="primary", use_container_width=True):
+            payload = {
+                "product": prod_name,
+                "capital": capital,
+                "markup": f"{markup}%",
+                "profit": round(profit, 2),
+                "selling": round(retail_price, 2)
+            }
+            WEBHOOK_URL = "https://google.com"
+            
+            with st.spinner("Saving to cloud..."):
+                try:
+                    response = requests.post(WEBHOOK_URL, json=payload)
+                    if response.status_code == 200:
+                        st.toast(f"✅ Successfully saved '{prod_name}'!")
+                        time.sleep(1.0)
+                        st.rerun()
+                    else:
+                        st.error("Failed to connect to the database pipeline.")
+                except Exception as e:
+                    st.error("Connection error. Check your Webhook URL.")
+
 # =========================================================
 # TAB 1: SMART PRICE CALCULATOR
 with tab1:
     st.subheader("Compute Product Pricing")
     
-    with st.form("calculator_form", clear_on_submit=True):
-        prod_name = st.text_input("Product Name", placeholder="e.g., Shampoo, Noodles, Soap")
+    # Kept normal layout instead of st.form to cleanly show live metrics as you type
+    prod_name = st.text_input("Product Name", placeholder="e.g., Shampoo, Noodles, Soap")
+    
+    col1, col2 = st.columns(2)
+    with col1:
+        capital = st.number_input("Capital Cost (₱)", min_value=0.0, step=1.0, value=0.0)
+    with col2:
+        markup = st.number_input("Desired Markup (%)", min_value=0.0, step=1.0, value=10.0)
         
-        col1, col2 = st.columns(2)
-        with col1:
-            capital = st.number_input("Capital Cost (₱)", min_value=0.0, step=1.0, value=0.0)
-        with col2:
-            markup = st.number_input("Desired Markup (%)", min_value=0.0, step=1.0, value=10.0)
-            
-        submit_btn = st.form_submit_button("📥 Save to Master Price List", use_container_width=True)
-        
-        if submit_btn:
-            if prod_name.strip():
-                # FIX: Calculate values inside the execution block after submission
-                profit = capital * (markup / 100.0)
-                retail_price = capital + profit
-                
-                payload = {
-                    "product": prod_name,
-                    "capital": capital,
-                    "markup": f"{markup}%",
-                    "profit": round(profit, 2),
-                    "selling": round(retail_price, 2)
-                }
-                
-                # WEBHOOK URL FOR GOOGLE APPS SCRIPT
-                WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbwm0XqttmJPpzw7YvWoC0m7ehfGVcPjU9VphzxHT5Zh9zXeaZpYZJ8ulQ-9HvexVaxrhg/exec"
-                
-                try:
-                    response = requests.post(WEBHOOK_URL, json=payload)
-                    if response.status_code == 200:
-                        st.toast(f"✅ Successfully saved '{prod_name}' (₱{retail_price:,.2f}) directly to your Sheet!")
-                        time.sleep(1.0)  # Wait for Google Sheet update
-                        st.rerun()
-                    else:
-                        st.error("Failed to connect to the database pipeline.")
-                except Exception as e:
-                    st.error("Connection error. Make sure your Webhook URL is pasted correctly.")
-            else:
-                st.warning("Please type a valid Product Name before saving.")
+    profit = capital * (markup / 100.0)
+    retail_price = capital + profit
+    
+    st.markdown("---")
+    res_col1, res_col2 = st.columns(2)
+    with res_col1:
+        st.metric(label="Profit per Unit", value=f"₱{profit:,.2f}")
+    with res_col2:
+        st.metric(label="Final Retail Selling Price", value=f"₱{retail_price:,.2f}")
+    
+    st.markdown("---")
+    
+    submit_btn = st.button("📥 Save to Master Price List", use_container_width=True, type="primary")
+    
+    if submit_btn:
+        if prod_name.strip():
+            # Triggers the popup modal instead of sending the webhook directly
+            confirm_save_dialog(prod_name, capital, markup, profit, retail_price)
+        else:
+            st.warning("Please type a valid Product Name before saving.")
 
 # =========================================================
 # TAB 2: PRICE MASTER LIST
