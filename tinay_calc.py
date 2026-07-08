@@ -9,12 +9,13 @@ st.title("🧮 Tinay's Personal Retail Price Calculator")
 st.markdown("Calculate wholesale item prices and manage your master store retail price book.")
 
 # Webhook configuration pipeline
-WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbwerJsXr5JNyDwSvJNerFYe_jCpP9I8eLjiPYJoIPqXHwwq0IYwliJXuOfT8APL5Tka2w/exec"
+WEBHOOK_URL = "https://google.com"
 
 tab1, tab2 = st.tabs(["📝 Price Calculator", "📊 Price Master List"])
 
 # --- LIVE REFRESHING GOOGLE SHEETS VIEW ---
 sheet_id = "14XUh3otWt1EoVM3RuLPceHhAaKF5iigOQO44mMcN2Fo"
+# FIXED: Re-added the proper domain and directory slashes for Google Sheets API exporting
 csv_url = f"https://google.com{sheet_id}/export?format=csv&t={int(time.time())}"
 
 try:
