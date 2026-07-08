@@ -90,9 +90,10 @@ with tab1:
                         time.sleep(1.0)
                         st.rerun()
                     else:
-                        st.error("Failed to connect to the database pipeline.")
+                        st.error(f"🔴 Google Connection Error (Status Code: {response.status_code})")
+                        st.code(response.text[:500], language="html")
                 except Exception as e:
-                    st.error("Connection error. Make sure your Webhook URL is pasted correctly.")
+                    st.error(f"Connection error: {e}")
 
     # OVERWRITE POPUP / DIALOG CONTAINER
     if st.session_state.get("show_overwrite_dialog", False):
@@ -122,6 +123,14 @@ with tab1:
 # TAB 2: PRICE MASTER LIST & DELETION INTERFACE
 with tab2:
     st.subheader("Your Cloud Price Master List")
+    
+    # Live error catcher container to check sheet stream connectivity issues
+    try:
+        test_df = pd.read_csv(csv_url)
+    except Exception as read_error:
+        st.error(f"🔴 Live Data Loading Error: {read_error}")
+        st.info(f"Checking access url link targets: {csv_url}")
+
     if df_master.empty or len(df_master) == 0:
         st.info("Your list is currently empty or loading live entries...")
     else:
@@ -137,7 +146,7 @@ with tab2:
         head_col3.markdown("**Retail Price**")
         st.markdown("---")
         
-        # Render check box rows manually for precise selective deletion operations
+        # Render checkbox rows manually for precise selective deletion operations
         for index, row in df_master.iterrows():
             p_name = row.get("Product Name", "Unknown")
             p_price = row.get("Selling Price", "0.0")
