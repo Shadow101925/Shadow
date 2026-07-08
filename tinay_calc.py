@@ -96,13 +96,15 @@ with tab1:
                     st.error("Connection error. Make sure your Webhook URL is pasted correctly.")
 
     # OVERWRITE POPUP / DIALOG CONTAINER
+       # OVERWRITE POPUP / DIALOG CONTAINER
     if st.session_state.get("show_overwrite_dialog", False):
         st.markdown("---")
         st.warning(f"⚠️ **Notice:** '{prod_name}' already exists in your Master Price List. Do you want to overwrite it?")
         
         choice_col1, choice_col2 = st.columns(2)
         with choice_col1:
-            if st.button("Yes, Overwrite Existing", use_container_width=True, type="danger"):
+            # ADDED THE key PARAMETER HERE TO FIX THE STREAMLIT EXCEPTION:
+            if st.button("Yes, Overwrite Existing", use_container_width=True, type="danger", key="confirm_overwrite_btn"):
                 try:
                     response = requests.post(WEBHOOK_URL, json=st.session_state["pending_payload"])
                     if response.status_code == 200:
@@ -110,6 +112,15 @@ with tab1:
                         st.session_state["show_overwrite_dialog"] = False
                         time.sleep(1.0)
                         st.rerun()
+                    else:
+                        st.error("Failed to update entry.")
+                except Exception as e:
+                    st.error("Connection error.")
+        with choice_col2:
+            if st.button("Cancel", use_container_width=True, key="cancel_overwrite_btn"):
+                st.session_state["show_overwrite_dialog"] = False
+                st.rerun()
+
                     else:
                         st.error("Failed to update entry.")
                 except Exception as e:
