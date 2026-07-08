@@ -9,13 +9,13 @@ st.title("🧮 Tinay's Personal Retail Price Calculator")
 st.markdown("Calculate wholesale item prices and manage your master store retail price book.")
 
 # Webhook configuration pipeline
-WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbwm0XqttmJPpzw7YvWoC0m7ehfGVcPjU9VphzxHT5Zh9zXeaZpYZJ8ulQ-9HvexVaxrhg/exec"
+WEBHOOK_URL = "https://google.com"
 
 tab1, tab2 = st.tabs(["📝 Price Calculator", "📊 Price Master List"])
 
 # --- LIVE REFRESHING GOOGLE SHEETS VIEW ---
 sheet_id = "14XUh3otWt1EoVM3RuLPceHhAaKF5iigOQO44mMcN2Fo"
-csv_url = f"https://docs.google.com/spreadsheets/d/{sheet_id}/export?format=csv&t={int(time.time())}"
+csv_url = f"https://google.com{sheet_id}/export?format=csv&t={int(time.time())}"
 
 try:
     df_master = pd.read_csv(csv_url)
@@ -34,7 +34,6 @@ def check_exists(name):
 with tab1:
     st.subheader("Compute Product Pricing")
     
-    # 1. Input Section (Moved outside a traditional Form to handle multi-step confirmation popups)
     prod_name = st.text_input("Product Name", placeholder="e.g., Shampoo, Noodles, Soap")
     
     col1, col2 = st.columns(2)
@@ -96,14 +95,12 @@ with tab1:
                     st.error("Connection error. Make sure your Webhook URL is pasted correctly.")
 
     # OVERWRITE POPUP / DIALOG CONTAINER
-       # OVERWRITE POPUP / DIALOG CONTAINER
     if st.session_state.get("show_overwrite_dialog", False):
         st.markdown("---")
         st.warning(f"⚠️ **Notice:** '{prod_name}' already exists in your Master Price List. Do you want to overwrite it?")
         
         choice_col1, choice_col2 = st.columns(2)
         with choice_col1:
-            # ADDED THE key PARAMETER HERE TO FIX THE STREAMLIT EXCEPTION:
             if st.button("Yes, Overwrite Existing", use_container_width=True, type="danger", key="confirm_overwrite_btn"):
                 try:
                     response = requests.post(WEBHOOK_URL, json=st.session_state["pending_payload"])
@@ -121,15 +118,6 @@ with tab1:
                 st.session_state["show_overwrite_dialog"] = False
                 st.rerun()
 
-                    else:
-                        st.error("Failed to update entry.")
-                except Exception as e:
-                    st.error("Connection error.")
-        with choice_col2:
-            if st.button("Cancel", use_container_width=True):
-                st.session_state["show_overwrite_dialog"] = False
-                st.rerun()
-
 # =========================================================
 # TAB 2: PRICE MASTER LIST & DELETION INTERFACE
 with tab2:
@@ -143,7 +131,7 @@ with tab2:
         to_delete = []
         
         # Display Header Row
-        head_col1, head_col2, head_col3 = st.columns([1, 4, 2])
+        head_col1, head_col2, head_col3 = st.columns()
         head_col1.markdown("**Delete**")
         head_col2.markdown("**Product Name**")
         head_col3.markdown("**Retail Price**")
@@ -154,8 +142,7 @@ with tab2:
             p_name = row.get("Product Name", "Unknown")
             p_price = row.get("Selling Price", "0.0")
             
-            c1, c2, c3 = st.columns([1, 4, 2])
-            # Checkbox key must be unique per product row element
+            c1, c2, c3 = st.columns()
             if c1.checkbox("🗑️", key=f"del_{index}_{p_name}"):
                 to_delete.append(p_name)
             c2.text(p_name)
@@ -166,7 +153,7 @@ with tab2:
         # Multi-Item Action Button for Deletion
         if len(to_delete) > 0:
             st.error(f"Ready to remove {len(to_delete)} item(s) from your data records.")
-            if st.button("🚨 Permanently Delete Selected Products", use_container_width=True, type="primary"):
+            if st.button("🚨 Permanently Delete Selected Products", use_container_width=True, type="primary", key="delete_records_btn"):
                 success_count = 0
                 for delete_target in to_delete:
                     try:
