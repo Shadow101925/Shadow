@@ -5,18 +5,23 @@ import time
 
 # APP CONFIGURATION
 st.set_page_config(page_title="Tinay's Price Calculator", page_icon="🧮", layout="centered")
-st.title("🮩 Tinay's Personal Retail Price Calculator")
+st.title("🧮 Tinay's Personal Retail Price Calculator")
 st.markdown("Calculate wholesale item prices and manage your master store retail price book.")
 
 tab1, tab2 = st.tabs(["📝 Price Calculator", "📊 Price Master List"])
 
 # --- LIVE REFRESHING GOOGLE SHEETS VIEW ---
-# Hardcoded to cleanly stream data from your primary cloud spreadsheet asset
-csv_url = "https://google.com"
+sheet_id = "14XUh3otWt1EoVM3RuLPceHhAaKF5iigOQO44mMcN2Fo"
+# UPDATED: Switched to the bulletproof Google Visualization endpoint to bypass login page blocks
+csv_url = f"https://google.com{sheet_id}/gviz/tq?tqx=out:csv&t={int(time.time())}"
 
 try:
     df_master = pd.read_csv(csv_url)
     df_master.columns = df_master.columns.str.strip()
+    
+    # Clean up any blank/unnamed columns that Google's visual endpoint might send over
+    df_master = df_master.dropna(how='all', axis=1)
+    df_master = df_master.loc[:, ~df_master.columns.str.contains('^Unnamed')]
 except Exception as e:
     df_master = pd.DataFrame(columns=["Product Name", "Capital Cost", "Markup", "Profit", "Selling Price"])
 
@@ -59,7 +64,6 @@ with tab1:
         
         if submit_btn:
             if prod_name.strip():
-                # Store the data payload layout ready for submission actions
                 st.session_state["pending_payload"] = {
                     "action": "save",
                     "product": prod_name.strip(),
@@ -69,12 +73,10 @@ with tab1:
                     "selling": retail_price
                 }
                 
-                # Check if it already exists to determine if we trigger a confirmation prompt
                 if check_exists(prod_name):
                     st.session_state["show_overwrite_dialog"] = True
                     st.session_state["duplicate_product_name"] = prod_name.strip()
                 else:
-                    # Clear modal trigger state and direct save for fresh items
                     st.session_state["show_overwrite_dialog"] = False
                     try:
                         response = requests.post(WEBHOOK_URL, json=st.session_state["pending_payload"])
@@ -121,5 +123,4 @@ with tab2:
     if df_master.empty or len(df_master) == 0:
         st.info("Your list is currently empty or loading live entries...")
     else:
-        # Display the live table from your Google Sheet cleanly
         st.dataframe(df_master, use_container_width=True)
