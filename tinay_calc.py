@@ -14,7 +14,7 @@ tab1, tab2 = st.tabs(["🧮 Price Calculator", "📋 Price Master List"])
 try:
     conn = st.connection("gsheets", type=GSheetsConnection)
     # Read existing spreadsheet data rows safely
-    df_master = conn.read(spreadsheet="https://google.com", ttl="0d")
+    df_master = conn.read(spreadsheet="https://google.com")
     # Clean up column names to match Python expectations
     df_master.columns = df_master.columns.str.strip()
 except Exception as e:
