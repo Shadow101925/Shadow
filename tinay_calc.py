@@ -13,7 +13,6 @@ tab1, tab2 = st.tabs(["📝 Price Calculator", "📊 Price Master List"])
 
 # --- LIVE REFRESHING GOOGLE SHEETS VIEW ---
 sheet_id = "14XUh3otWt1EoVM3RuLPceHhAaKF5iigOQO44mMcN2Fo"
-# Uses the Visualization API endpoint and a timestamp to bypass caching and script blockades
 csv_url = f"https://google.com{sheet_id}/gviz/tq?tqx=out:csv&t={int(time.time())}"
 
 try:
@@ -26,7 +25,14 @@ except Exception as e:
 
 # --- POPUP CONFIRMATION DIALOG ---
 @st.dialog("Confirm Save to Master List")
-def confirm_save_dialog(prod_name, capital, markup, profit, retail_price):
+def confirm_save_dialog():
+    # Fetch values safely out of memory cache state
+    prod_name = st.session_state.get("save_prod_name", "")
+    capital = st.session_state.get("save_capital", 0.0)
+    markup = st.session_state.get("save_markup", 10.0)
+    profit = st.session_state.get("save_profit", 0.0)
+    retail_price = st.session_state.get("save_retail_price", 0.0)
+
     st.write(f"Are you sure you want to add **{prod_name}**?")
     st.write(f"💰 **Capital Cost:** ₱{capital:,.2f}")
     st.write(f"📈 **Markup:** {markup}%")
@@ -65,7 +71,6 @@ def confirm_save_dialog(prod_name, capital, markup, profit, retail_price):
 with tab1:
     st.subheader("Compute Product Pricing")
     
-    # Form layout removed so values calculate and display dynamically
     prod_name = st.text_input("Product Name", placeholder="e.g., Shampoo, Noodles, Soap")
     
     col1, col2 = st.columns(2)
@@ -90,8 +95,15 @@ with tab1:
     
     if submit_btn:
         if prod_name.strip():
-            # Intercepts the workflow and triggers confirmation window
-            confirm_save_dialog(prod_name, capital, markup, profit, retail_price)
+            # Secure values inside state storage before opening dialog box
+            st.session_state["save_prod_name"] = prod_name
+            st.session_state["save_capital"] = capital
+            st.session_state["save_markup"] = markup
+            st.session_state["save_profit"] = profit
+            st.session_state["save_retail_price"] = retail_price
+            
+            # Trigger confirmation window safely
+            confirm_save_dialog()
         else:
             st.warning("Please type a valid Product Name before saving.")
 
