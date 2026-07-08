@@ -5,15 +5,14 @@ import time
 
 # APP CONFIGURATION
 st.set_page_config(page_title="Tinay's Price Calculator", page_icon="🧮", layout="centered")
-st.title("🧮 Tinay's Personal Retail Price Calculator")
+st.title("🮩 Tinay's Personal Retail Price Calculator")
 st.markdown("Calculate wholesale item prices and manage your master store retail price book.")
 
 tab1, tab2 = st.tabs(["📝 Price Calculator", "📊 Price Master List"])
 
 # --- LIVE REFRESHING GOOGLE SHEETS VIEW ---
-sheet_id = "14XUh3otWt1EoVM3RuLPceHhAaKF5iigOQO44mMcN2Fo"
-# Appended an auto-updating time integer string to destroy old browser caches
-csv_url = f"https://google.com{sheet_id}/export?format=csv&t={int(time.time())}"
+# Hardcoded to cleanly stream data from your primary cloud spreadsheet asset
+csv_url = "https://google.com"
 
 try:
     df_master = pd.read_csv(csv_url)
@@ -90,7 +89,7 @@ with tab1:
             else:
                 st.warning("Please type a valid Product Name before saving.")
 
-    # 🚨 INTERACTIVE OVERWRITE POPUP SYSTEM (Placed outside the form to allow secondary click tracking options)
+    # 🚨 INTERACTIVE OVERWRITE POPUP SYSTEM
     if st.session_state.get("show_overwrite_dialog", False):
         dup_name = st.session_state.get("duplicate_product_name", "This item")
         st.markdown("---")
