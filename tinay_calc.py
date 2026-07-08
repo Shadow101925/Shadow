@@ -9,7 +9,7 @@ st.title("🧮 Tinay's Personal Retail Price Calculator")
 st.markdown("Calculate wholesale item prices and manage your master store retail price book.")
 
 # Webhook configuration pipeline
-WEBHOOK_URL = "https://google.com"
+WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbwerJsXr5JNyDwSvJNerFYe_jCpP9I8eLjiPYJoIPqXHwwq0IYwliJXuOfT8APL5Tka2w/exec"
 
 tab1, tab2 = st.tabs(["📝 Price Calculator", "📊 Price Master List"])
 
