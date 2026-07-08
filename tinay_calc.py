@@ -16,7 +16,7 @@ tab1, tab2 = st.tabs(["📝 Price Calculator", "📊 Price Master List"])
 # --- LIVE REFRESHING GOOGLE SHEETS VIEW ---
 sheet_id = "14XUh3otWt1EoVM3RuLPceHhAaKF5iigOQO44mMcN2Fo"
 # FIXED: Re-added the proper domain and directory slashes for Google Sheets API exporting
-csv_url = f"https://google.com{sheet_id}/export?format=csv&t={int(time.time())}"
+csv_url = f"https://google.com/export?format=csv&t={int(time.time())}"
 
 try:
     df_master = pd.read_csv(csv_url)
