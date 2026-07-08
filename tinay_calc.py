@@ -48,7 +48,7 @@ with tab1:
         st.markdown("---")
         
         # ⚠️ REMEMBER TO REPLACE THIS WITH YOUR WEB APP URL GENERATED IN GOOGLE APPS SCRIPT:
-        WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbwm0XqttmJPpzw7YvWoC0m7ehfGVcPjU9VphzxHT5Zh9zXeaZpYZJ8ulQ-9HvexVaxrhg/exec
+        WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbwm0XqttmJPpzw7YvWoC0m7ehfGVcPjU9VphzxHT5Zh9zXeaZpYZJ8ulQ-9HvexVaxrhg/exec"
 "
         
         submit_btn = st.form_submit_button("📥 Save to Master Price List", use_container_width=True)
