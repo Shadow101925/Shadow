@@ -1,31 +1,23 @@
 import streamlit as st
 import pandas as pd
-from streamlit_gsheets import GSheetsConnection
+import requests
 
-# PERSONALIZED APP CONFIGURATION
+# APP CONFIGURATION
 st.set_page_config(page_title="Tinay's Price Calculator", page_icon="🧮", layout="centered")
 st.title("🧮 Tinay's Personal Retail Price Calculator")
 st.markdown("Calculate wholesale item prices and manage your master store retail price book.")
 
 tab1, tab2 = st.tabs(["📝 Price Calculator", "📊 Price Master List"])
 
-# --- FIXED SECURE DIRECT CONNECTION ---
-url = "https://google.com"
+# --- LIVE GOOGLE SHEETS VIEW CONNECTION ---
+sheet_id = "14XUh3otWt1EoVM3RuLPceHhAaKF5iigOQO44mMcN2Fo"
+csv_url = f"https://google.com{sheet_id}/export?format=csv"
 
 try:
-    conn = st.connection("gsheets", type=GSheetsConnection)
-    # Replaced connection mapping to pull directly from your URL string
-    df_master = conn.read(spreadsheet=url, ttl="0d")
+    df_master = pd.read_csv(csv_url)
     df_master.columns = df_master.columns.str.strip()
 except Exception as e:
-    # If the connection tool fails, pull the data as a clean public web reader
-    try:
-        sheet_id = "14XUh3otWt1EoVM3RuLPceHhAaKF5iigOQO44mMcN2Fo"
-        csv_url = f"https://google.com{sheet_id}/export?format=csv"
-        df_master = pd.read_csv(csv_url)
-        df_master.columns = df_master.columns.str.strip()
-    except:
-        df_master = pd.DataFrame(columns=["Product Name", "Capital Cost", "Markup", "Profit", "Selling Price"])
+    df_master = pd.DataFrame(columns=["Product Name", "Capital Cost", "Markup", "Profit", "Selling Price"])
 
 # =========================================================
 # TAB 1: SMART PRICE CALCULATOR
@@ -52,28 +44,27 @@ with tab1:
         
     st.markdown("---")
     
+    # ⚠️ PASTE YOUR COPIED WEB APP URL INSIDE THE QUOTES BELOW:
+    WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbwn8dPZgJgb4nVMI9tXzc4RidlCLGX2N5uILXCwl7OfxelXvU4ytC_89J4A3UQnG85cjQ/exec"
+    
     if prod_name:
         if st.button("📥 Save to Master Price List", use_container_width=True):
-            new_entry = pd.DataFrame([{
-                "Product Name": prod_name,
-                "Capital Cost": capital,
-                "Markup": f"{markup}%",
-                "Profit": profit,
-                "Selling Price": retail_price
-            }])
-            
-            updated_df = pd.concat([df_master, new_entry], ignore_index=True)
-            
-            # Direct link fallback structure for updating rows safely
+            payload = {
+                "product": prod_name,
+                "capital": capital,
+                "markup": f"{markup}%",
+                "profit": profit,
+                "selling": retail_price
+            }
             try:
-                conn.update(spreadsheet=url, data=updated_df)
-                st.toast(f"✅ Successfully logged '{prod_name}' to cloud spreadsheet!")
-                st.rerun()
-            except Exception as update_error:
-                st.error("🔒 Google API blocks remote writing without explicit credentials. Click below to add it directly:")
-                sheet_id = "14XUh3otWt1EoVM3RuLPceHhAaKF5iigOQO44mMcN2Fo"
-                form_url = f"https://google.com{sheet_id}/edit#gid=0"
-                st.markdown(f"[🔗 Open Google Sheets to Log '{prod_name}' with Retail Price ₱{retail_price:,.2f}]({form_url})")
+                response = requests.post(WEBHOOK_URL, json=payload)
+                if response.status_code == 200:
+                    st.success(f"✅ Successfully saved '{prod_name}' directly to your Sheet!")
+                    st.rerun()
+                else:
+                    st.error("Failed to connect to the database pipeline.")
+            except Exception as e:
+                st.error("Connection error. Make sure your Webhook URL is pasted correctly.")
     else:
         st.info("Type a Product Name above to unlock the database save options.")
 
