@@ -1,5 +1,6 @@
 import streamlit as st
 import pandas as pd
+from streamlit_gsheets import GSheetsConnection
 
 # PERSONALIZED APP CONFIGURATION
 st.set_page_config(page_title="Tinay's Price Calculator", page_icon="🧮", layout="centered")
@@ -8,16 +9,14 @@ st.markdown("Calculate wholesale item prices and manage your master store retail
 
 tab1, tab2 = st.tabs(["📝 Price Calculator", "📊 Price Master List"])
 
-# --- DIRECT LIVE GOOGLE SHEETS CONNECTION ---
-# Formats your Google Sheets link to export cleanly as a public CSV reader
-sheet_id = "14XUh3otWt1EoVM3RuLPceHhAaKF5iigOQO44mMcN2Fo"
-csv_url = f"https://google.com{sheet_id}/export?format=csv"
-
+# --- CLOUD GOOGLE SHEETS CONNECTION ---
 try:
-    # Pull live data rows instantly without requiring local Secrets configuration
-    df_master = pd.read_csv(csv_url)
+    conn = st.connection("gsheets", type=GSheetsConnection)
+    url = "https://google.com"
+    df_master = conn.read(spreadsheet=url, ttl="0d")
     df_master.columns = df_master.columns.str.strip()
 except Exception as e:
+    st.error("Waiting for Secrets configuration...")
     df_master = pd.DataFrame(columns=["Product Name", "Capital Cost", "Markup", "Profit", "Final Retail Price"])
 
 # =========================================================
@@ -45,12 +44,21 @@ with tab1:
         
     st.markdown("---")
     
-    # Unlocks action option dynamically when a string value is passed into the entry field
+    # THE SAVE BUTTON CODE
     if prod_name:
-        # Created a public submission reference link for easy tracking
-        form_url = f"https://google.com{sheet_id}/edit#gid=0"
-        st.success(f"✨ Ready to save **{prod_name}** to your online database!")
-        st.markdown(f"[🔗 Open Google Sheets to View or Edit Data Records]({form_url})")
+        if st.button("📥 Save to Master Price List", use_container_width=True):
+            new_entry = pd.DataFrame([{
+                "Product Name": prod_name,
+                "Capital Cost": capital,
+                "Markup": f"{markup}%",
+                "Profit": profit,
+                "Final Retail Price": retail_price
+            }])
+            
+            updated_df = pd.concat([df_master, new_entry], ignore_index=True)
+            conn.update(spreadsheet=url, data=updated_df)
+            st.toast(f"✅ Successfully logged '{prod_name}' to cloud spreadsheet!")
+            st.rerun()
     else:
         st.info("Type a Product Name above to unlock the database save options.")
 
@@ -61,5 +69,4 @@ with tab2:
     if df_master.empty:
         st.info("Your list is currently empty or loading...")
     else:
-        # Display the live table from your Google Sheet cleanly
         st.dataframe(df_master, use_container_width=True)
