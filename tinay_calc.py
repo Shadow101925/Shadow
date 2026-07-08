@@ -17,7 +17,7 @@ try:
     df_master.columns = df_master.columns.str.strip()
 except Exception as e:
     st.error("Waiting for Secrets configuration...")
-    df_master = pd.DataFrame(columns=["Product Name", "Capital Cost", "Markup", "Profit", "Final Retail Price"])
+    df_master = pd.DataFrame(columns=["Product Name", "Capital Cost", "Markup", "Profit", "Selling Price"])
 
 # =========================================================
 # TAB 1: SMART PRICE CALCULATOR
@@ -44,7 +44,7 @@ with tab1:
         
     st.markdown("---")
     
-    # THE SAVE BUTTON CODE
+    # THE FIXED SAVE BUTTON CODE (MATCHES YOUR GOOGLE SHEET COLUMNS)
     if prod_name:
         if st.button("📥 Save to Master Price List", use_container_width=True):
             new_entry = pd.DataFrame([{
@@ -52,7 +52,7 @@ with tab1:
                 "Capital Cost": capital,
                 "Markup": f"{markup}%",
                 "Profit": profit,
-                "Final Retail Price": retail_price
+                "Selling Price": retail_price
             }])
             
             updated_df = pd.concat([df_master, new_entry], ignore_index=True)
