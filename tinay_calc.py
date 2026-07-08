@@ -14,9 +14,8 @@ WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbwerJsXr5JNyDwSvJNerFYe_j
 tab1, tab2 = st.tabs(["📝 Price Calculator", "📊 Price Master List"])
 
 # --- LIVE REFRESHING GOOGLE SHEETS VIEW ---
-sheet_id = "14XUh3otWt1EoVM3RuLPceHhAaKF5iigOQO44mMcN2Fo"
-# FIXED: Re-added the proper domain and directory slashes for Google Sheets API exporting
-csv_url = f"https://google.com/export?format=csv&t={int(time.time())}"
+# FIXED: Hardcoded the full, correct URL path to prevent any accidental string formatting bugs
+csv_url = f"https://google.com{int(time.time())}"
 
 try:
     df_master = pd.read_csv(csv_url)
@@ -30,18 +29,33 @@ def check_exists(name):
         return name.strip().lower() in df_master["Product Name"].astype(str).str.strip().str.lower().values
     return False
 
+# Function to safely clear inputs out of memory upon successful operations
+def clear_form_fields():
+    st.session_state["prod_input"] = ""
+    st.session_state["capital_input"] = 0.0
+    st.session_state["markup_input"] = 10.0
+
+# Initialize input session states if they don't exist yet
+if "prod_input" not in st.session_state:
+    st.session_state["prod_input"] = ""
+if "capital_input" not in st.session_state:
+    st.session_state["capital_input"] = 0.0
+if "markup_input" not in st.session_state:
+    st.session_state["markup_input"] = 10.0
+
 # =========================================================
 # TAB 1: SMART PRICE CALCULATOR
 with tab1:
     st.subheader("Compute Product Pricing")
     
-    prod_name = st.text_input("Product Name", placeholder="e.g., Shampoo, Noodles, Soap")
+    # Linked directly to session states so we can forcefully clear them on click actions
+    prod_name = st.text_input("Product Name", key="prod_input", placeholder="e.g., Shampoo, Noodles, Soap")
     
     col1, col2 = st.columns(2)
     with col1:
-        capital = st.number_input("Capital Cost (₱)", min_value=0.0, step=1.0, value=0.0)
+        capital = st.number_input("Capital Cost (₱)", min_value=0.0, step=1.0, key="capital_input")
     with col2:
-        markup = st.number_input("Desired Markup (%)", min_value=0.0, step=1.0, value=10.0)
+        markup = st.number_input("Desired Markup (%)", min_value=0.0, step=1.0, key="markup_input")
         
     profit = capital * (markup / 100.0)
     retail_price = capital + profit
@@ -88,11 +102,11 @@ with tab1:
                     response = requests.post(WEBHOOK_URL, json=payload)
                     if response.status_code == 200:
                         st.toast(f"✅ Successfully saved '{prod_name}' directly to your Sheet!")
+                        clear_form_fields() # Clear fields automatically
                         time.sleep(1.0)
                         st.rerun()
                     else:
                         st.error(f"🔴 Google Connection Error (Status Code: {response.status_code})")
-                        st.code(response.text[:500], language="html")
                 except Exception as e:
                     st.error(f"Connection error: {e}")
 
@@ -109,6 +123,7 @@ with tab1:
                     if response.status_code == 200:
                         st.toast(f"🔄 Correctly updated '{prod_name}' in your Sheet!")
                         st.session_state["show_overwrite_dialog"] = False
+                        clear_form_fields() # Clear fields automatically
                         time.sleep(1.0)
                         st.rerun()
                     else:
