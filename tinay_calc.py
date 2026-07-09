@@ -7,28 +7,43 @@ import io
 # APP CONFIGURATION
 st.set_page_config(page_title="Tinay's Price Calculator", page_icon="🧮", layout="centered")
 
-# --- CUSTOM PINK THEME STYLING (BAGO) ---
+# --- FIXED CUTE PINK THEME STYLING ---
 st.markdown("""
     <style>
     /* Binabago ang background ng buong app */
     .stApp {
-        background-color: #FFF0F5; /* Napakagandang Pastel Soft Pink */
+        background-color: #FFF0F5; /* Soft Lavender Pink */
     }
-    /* Binabago ang kulay ng mga tabs para bumagay */
+    
+    /* Disenyo ng buong Tab Section */
     .stTabs [data-baseweb="tab-list"] {
-        gap: 24px;
+        gap: 12px;
+        background-color: transparent;
     }
+    
+    /* Disenyo para sa LAHAT ng Tabs kapag hindi pa kiniclick */
     .stTabs [data-baseweb="tab"] {
-        height: 50px;
-        white-space: pre-wrap;
-        background-color: #FFE4E1; /* Misty Rose Pink para sa tab buttons */
+        height: 48px;
+        background-color: #FFD1DC !important; /* Soft Pastel Baby Pink para sa inactive tab */
         border-radius: 8px 8px 0px 0px;
-        padding: 10px 20px;
-        color: #333333;
+        padding: 10px 24px;
+        color: #555555 !important;
+        font-weight: normal;
+        border: none !important;
+        transition: all 0.3s ease;
     }
+    
+    /* FIX: Disenyo para sa SELECTED o ACTIVE Tab (Matingkad at Halata) */
     .stTabs [aria-selected="true"] {
-        background-color: #FFB6C1 !important; /* Mas matingkad na pink kapag active ang tab */
-        font-weight: bold;
+        background-color: #FF69B4 !important; /* Matingkad na Hot Pink para sa Selected Tab */
+        color: #FFFFFF !important; /* Puting text para kitang-kita */
+        font-weight: bold !important;
+        box-shadow: 0px 4px 10px rgba(255, 105, 180, 0.3);
+    }
+    
+    /* Tinatanggal ang pangit na pulang underline line sa ilalim ng tabs */
+    .stTabs [data-baseweb="tab-highlight"] {
+        background-color: transparent !important;
     }
     </style>
     """, unsafe_allow_html=True)
