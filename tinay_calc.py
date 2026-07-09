@@ -6,55 +6,7 @@ import io
 
 # APP CONFIGURATION
 st.set_page_config(page_title="Tinay's Price Calculator", page_icon="🧮", layout="centered")
-
-# --- FIXED CUTE PINK THEME STYLING (SAFE AND FINAL RETOUCH) ---
-st.markdown("""
-    <style>
-    /* Binabago ang background ng buong app */
-    .stApp {
-        background-color: #FFF0F5; /* Soft Lavender Pink */
-    }
-    
-    /* Disenyo ng buong Tab Section */
-    .stTabs [data-baseweb="tab-list"] {
-        gap: 12px;
-        background-color: transparent;
-    }
-    
-    /* Disenyo para sa LAHAT ng Tabs kapag hindi pa kiniclick */
-    .stTabs [data-baseweb="tab"] {
-        height: 48px;
-        background-color: #FFD1DC !important; /* Soft Pastel Baby Pink para sa inactive tab */
-        border-radius: 8px 8px 0px 0px;
-        padding: 10px 24px;
-        color: #444444 !important;
-        font-weight: normal;
-        border: none !important;
-        transition: all 0.3s ease;
-    }
-    
-    /* FIX: Disenyo para sa SELECTED o ACTIVE Tab (Matingkad at Halata) */
-    .stTabs [aria-selected="true"] {
-        background-color: #FF69B4 !important; /* Matingkad na Hot Pink para sa Selected Tab */
-        color: #FFFFFF !important; /* Puting text para kitang-kita */
-        font-weight: bold !important;
-        box-shadow: 0px 4px 10px rgba(255, 105, 180, 0.3);
-    }
-    
-    /* Tinatanggal ang pangit na pulang underline line sa ilalim ng tabs */
-    .stTabs [data-baseweb="tab-highlight"] {
-        background-color: transparent !important;
-    }
-    
-    /* 🚀 TARGETED FIX: Ginagawang PUTI ang text sa loob ng CANCEL at iba pang dialog buttons para litaw na litaw */
-    .stDialog button, div[data-testid="stDialog"] button, .stDialog button p, div[data-testid="stDialog"] button p {
-        color: #FFFFFF !important;
-        font-weight: bold !important;
-    }
-    </style>
-    """, unsafe_allow_html=True)
-
-st.title("🮮 Tinay's Personal Retail Price Calculator")
+st.title("🧮 Tinay's Personal Retail Price Calculator")
 st.markdown("Calculate wholesale item prices and manage your master store retail price book.")
 
 tab1, tab2 = st.tabs(["📝 Price Calculator", "📊 Price Master List"])
@@ -69,7 +21,6 @@ WEBHOOK_URL = "https://google.com"
 def fetch_live_matrix():
     try:
         headers = {"User-Agent": "Mozilla/5.0"}
-        # Ginagamit ang orihinal na subok na gviz engine link layout na may hardcoded variables
         csv_url = f"https://google.com{SHEET_ID}/gviz/tq?tqx=out:csv&sheet=Sheet1&t={int(time.time())}"
         response = requests.get(csv_url, headers=headers, timeout=10)
         
