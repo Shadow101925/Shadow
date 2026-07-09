@@ -7,34 +7,34 @@ import io
 # APP CONFIGURATION
 st.set_page_config(page_title="Tinay's Price Calculator", page_icon="🧮", layout="centered")
 
-# --- PINAKABAGONG VISIBILITY THEME STYLING ---
+# --- KUMPLETO AT MATATAG NA DISENYO NG KULAY PINK ---
 st.markdown("""
     <style>
-    /* Binabago ang background ng buong app */
+    /* Background ng buong App */
     .stApp {
-        background-color: #FFF0F5; /* Soft Lavender Pink */
+        background-color: #FFF0F5; 
     }
     
-    /* Pwersahang ginagawang madilim ang text sa labas para readable sa pink background */
+    /* Kulay ng mga pangunahing sulat sa app */
     h1, h2, h3, p, label, .stMarkdown, span {
-        color: #1E1E1E !important; /* Dark Charcoal Text */
+        color: #1E1E1E !important; 
     }
     
-    /* Puwersahang ginagawang Puti ang background ng bagong Pop-up containers */
+    /* Background ng Pop-up (Puwersahang Puti para mabasa sa Dark Mode ng Phone) */
     .stDialog > div, div[data-testid="stDialog"] > div, div[role="dialog"] {
         background-color: #FFFFFF !important; 
         border-radius: 12px !important;
         box-shadow: 0px 10px 25px rgba(0,0,0,0.3) !important;
     }
     
-    /* Siguraduhing madilim at malinaw ang lahat ng text sa loob ng Pop-up modal */
+    /* Kulay ng text sa loob ng Pop-up dialog */
     .stDialog h1, .stDialog h2, .stDialog h3, .stDialog p, .stDialog li, .stDialog span, .stDialog div,
     div[data-testid="stDialog"] h1, div[data-testid="stDialog"] h2, div[data-testid="stDialog"] h3, 
     div[data-testid="stDialog"] p, div[data-testid="stDialog"] li, div[data-testid="stDialog"] span, div[data-testid="stDialog"] div {
         color: #1E1E1E !important; 
     }
     
-    /* FIX PARA SA CANCEL BUTTON TEXT */
+    /* Text sa loob ng Cancel button (Puwersahang Puti) */
     .stDialog button, div[data-testid="stDialog"] button {
         color: #FFFFFF !important;
     }
@@ -43,7 +43,7 @@ st.markdown("""
         font-weight: bold !important;
     }
     
-    /* FIX PARA SA SUCCESS TOAST NOTIFICATION */
+    /* Success Toast sa ilalim (Matingkad na Pink na may Puting Text) */
     div[data-testid="stToast"], [data-testid="stToast"] > div {
         background-color: #FF69B4 !important; 
         border-radius: 8px !important;
@@ -54,13 +54,11 @@ st.markdown("""
         font-weight: bold !important;
     }
     
-    /* Disenyo ng buong Tab Section */
+    /* Tab Buttons Disenyo */
     .stTabs [data-baseweb="tab-list"] {
         gap: 12px;
         background-color: transparent;
     }
-    
-    /* Disenyo para sa LAHAT ng Tabs kapag hindi pa kiniclick */
     .stTabs [data-baseweb="tab"] {
         height: 48px;
         background-color: #FFD1DC !important; 
@@ -71,16 +69,12 @@ st.markdown("""
         border: none !important;
         transition: all 0.3s ease;
     }
-    
-    /* Disenyo para sa SELECTED o ACTIVE Tab */
     .stTabs [aria-selected="true"] {
         background-color: #FF69B4 !important; 
         color: #FFFFFF !important; 
         font-weight: bold !important;
         box-shadow: 0px 4px 10px rgba(255, 105, 180, 0.3);
     }
-    
-    /* Tinatanggal ang pulang underline line sa ilalim ng tabs */
     .stTabs [data-baseweb="tab-highlight"] {
         background-color: transparent !important;
     }
@@ -93,19 +87,23 @@ st.markdown("Calculate wholesale item prices and manage your master store retail
 tab1, tab2 = st.tabs(["📝 Price Calculator", "📊 Price Master List"])
 
 # =========================================================
-# SYSTEM COMPATIBILITY CONFIGURATION (DIRECT CLOUD RECOVERY)
-SHEET_ID = "14XUh3otWt1EoVM3RuLPceHhAaKF5iigOQO44mMcN2Fo"
-# Humihingi ng pinakasariwang CSV data mula sa Sheet1 ng Google
-csv_url = f"https://google.com{SHEET_ID}/gviz/tq?tqx=out:csv&sheet=Sheet1&t={int(time.time())}"
+# CRITICAL DIRECT SYSTEM CONNECTORS
+# 🚀 PURELY UPDATED ENGINE PARAMETERS
+WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbzKvNDozq_GfNiJ1EMIrYdU3IEYWOXOT22yBh00mGsK4uF5dbGazT0hq4Ul2d5dYnHCuQ/exec"
 # =========================================================
 
 # --- HIGH-RELIABILITY LIVE REFRESH DATA ENGINE ---
 def fetch_live_matrix():
     try:
-        headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
-        response = requests.get(csv_url, headers=headers, timeout=12)
-        if response.status_code == 200 and len(response.text.strip()) > 5:
-            df = pd.read_csv(io.StringIO(response.text))
+        headers = {"User-Agent": "Mozilla/5.0"}
+        # Kinukuha ang listahan diretso sa bagong doGet function ng script
+        response = requests.get(f"{WEBHOOK_URL}?t={int(time.time())}", headers=headers, timeout=12)
+        if response.status_code == 200:
+            data_json = response.json()
+            if not data_json or len(data_json) == 0 or isinstance(data_json, dict):
+                return pd.DataFrame(columns=["Product Name", "Capital Cost", "Markup", "Profit", "Selling Price"])
+                
+            df = pd.DataFrame(data_json)
             df.columns = df.columns.str.strip().str.lower().str.replace(" ", "")
             
             mapping = {
@@ -121,14 +119,12 @@ def fetch_live_matrix():
         pass
     return pd.DataFrame(columns=["Product Name", "Capital Cost", "Markup", "Profit", "Selling Price"])
 
-# Kukuha ng sariwang data mula sa cloud sa bawat pagbuka ng page
 if "df_master_cache" not in st.session_state or st.session_state.get("trigger_reload", False):
     st.session_state["df_master_cache"] = fetch_live_matrix()
     st.session_state["trigger_reload"] = False
 
 df_master = st.session_state["df_master_cache"]
 
-# Siguraduhing tama ang istraktura ng database columns natin
 required_columns = ["Product Name", "Capital Cost", "Markup", "Profit", "Selling Price"]
 for col in required_columns:
     if col not in df_master.columns:
@@ -172,8 +168,6 @@ def confirm_save_dialog():
         if st.button("🔥 Yes, Confirm Save", type="primary", use_container_width=True):
             with st.spinner("Writing permanently to Google Cloud Spreadsheet..."):
                 
-                WEBHOOK_URL = "https://google.com"
-                
                 payload = {
                     "product": prod_name,
                     "capital": capital,
@@ -183,7 +177,7 @@ def confirm_save_dialog():
                 }
                 
                 try:
-                    # Gagamit ng POST request para isulat ni Google ang totoong row data sa spreadsheet
+                    # Ginagamit ang POST request para i-shoot ang JSON data sa bagong doPost function sa Google
                     response = requests.post(WEBHOOK_URL, json=payload, timeout=15)
                     st.session_state["trigger_reload"] = True
                     st.toast(f"✅ Successfully saved '{prod_name}' directly to your Sheet!")
@@ -251,6 +245,7 @@ with tab2:
         search_query = st.text_input("🔍 Search Product Name...", placeholder="Type to filter list live...")
         
         if search_query.strip():
+            # Apply dynamic string matching filter line tracking live record
             df_display = df_clean[df_clean["Product Name"].str.contains(search_query.strip(), case=False, na=False)]
         else:
             df_display = df_clean.copy()
