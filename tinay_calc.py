@@ -7,7 +7,7 @@ import io
 # APP CONFIGURATION
 st.set_page_config(page_title="Tinay's Price Calculator", page_icon="🧮", layout="centered")
 
-# --- PINAKABAGONG VISIBILITY THEME STYLING (FIXED) ---
+# --- PINAKABAGONG VISIBILITY THEME STYLING (FIXED WITH TOAST COLOR) ---
 st.markdown("""
     <style>
     /* Binabago ang background ng buong app */
@@ -20,18 +20,30 @@ st.markdown("""
         color: #1E1E1E !important; /* Dark Charcoal Text */
     }
     
-    /* 🚀 TARGETING NEW DIALOG: Puwersahang ginagawang Puti ang background ng bagong Pop-up containers */
+    /* Puwersahang ginagawang Puti ang background ng bagong Pop-up containers */
     .stDialog > div, div[data-testid="stDialog"] > div, div[role="dialog"] {
-        background-color: #FFFFFF !important; /* Pure White Background para sa Pop-up */
+        background-color: #FFFFFF !important; 
         border-radius: 12px !important;
         box-shadow: 0px 10px 25px rgba(0,0,0,0.3) !important;
     }
     
-    /* Siguraduhing madilim at malinaw ang lahat ng text sa loob ng bagong Pop-up model layout */
+    /* Siguraduhing madilim at malinaw ang lahat ng text sa loob ng Pop-up modal */
     .stDialog h1, .stDialog h2, .stDialog h3, .stDialog p, .stDialog li, .stDialog span, .stDialog div,
     div[data-testid="stDialog"] h1, div[data-testid="stDialog"] h2, div[data-testid="stDialog"] h3, 
     div[data-testid="stDialog"] p, div[data-testid="stDialog"] li, div[data-testid="stDialog"] span, div[data-testid="stDialog"] div {
-        color: #1E1E1E !important; /* Dark Charcoal para kitang-kita sa puting pop-up */
+        color: #1E1E1E !important; 
+    }
+    
+    /* 🚀 FIX PARA SA SUCCESS TOAST NOTIFICATION: Ginagawang Cute Hot Pink na may Puting Text */
+    div[data-testid="stToast"], [data-testid="stToast"] > div {
+        background-color: #FF69B4 !important; /* Matingkad na Hot Pink Background */
+        border-radius: 8px !important;
+        border: none !important;
+    }
+    /* Ginagawang puti ang mga letra sa loob ng success toast para litaw na litaw */
+    div[data-testid="stToast"] * {
+        color: #FFFFFF !important; 
+        font-weight: bold !important;
     }
     
     /* Disenyo ng buong Tab Section */
@@ -43,7 +55,7 @@ st.markdown("""
     /* Disenyo para sa LAHAT ng Tabs kapag hindi pa kiniclick */
     .stTabs [data-baseweb="tab"] {
         height: 48px;
-        background-color: #FFD1DC !important; /* Soft Pastel Baby Pink para sa inactive tab */
+        background-color: #FFD1DC !important; 
         border-radius: 8px 8px 0px 0px;
         padding: 10px 24px;
         color: #444444 !important;
@@ -54,8 +66,8 @@ st.markdown("""
     
     /* Disenyo para sa SELECTED o ACTIVE Tab */
     .stTabs [aria-selected="true"] {
-        background-color: #FF69B4 !important; /* Matingkad na Hot Pink para sa Selected Tab */
-        color: #FFFFFF !important; /* Puting text para litaw */
+        background-color: #FF69B4 !important; 
+        color: #FFFFFF !important; 
         font-weight: bold !important;
         box-shadow: 0px 4px 10px rgba(255, 105, 180, 0.3);
     }
