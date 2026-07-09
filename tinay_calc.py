@@ -7,7 +7,7 @@ import io
 # APP CONFIGURATION
 st.set_page_config(page_title="Tinay's Price Calculator", page_icon="🧮", layout="centered")
 
-# --- PINAKABAGONG VISIBILITY THEME STYLING (FIXED WITH TOAST COLOR) ---
+# --- PINAKABAGONG VISIBILITY THEME STYLING (FIXED BUTTON TEXT) ---
 st.markdown("""
     <style>
     /* Binabago ang background ng buong app */
@@ -34,7 +34,17 @@ st.markdown("""
         color: #1E1E1E !important; 
     }
     
-    /* 🚀 FIX PARA SA SUCCESS TOAST NOTIFICATION: Ginagawang Cute Hot Pink na may Puting Text */
+    /* 🚀 FIX PARA SA CANCEL BUTTON TEXT: Puwersahang ginagawang PUTI ang text sa loob ng mga pindutan sa dialog */
+    .stDialog button, div[data-testid="stDialog"] button {
+        color: #FFFFFF !important;
+    }
+    /* Siguraduhing puti rin ang kulay ng text kapag tinatapatan o pini-pindot ang button */
+    .stDialog button p, div[data-testid="stDialog"] button p {
+        color: #FFFFFF !important;
+        font-weight: bold !important;
+    }
+    
+    /* FIX PARA SA SUCCESS TOAST NOTIFICATION: Ginagawang Cute Hot Pink na may Puting Text */
     div[data-testid="stToast"], [data-testid="stToast"] > div {
         background-color: #FF69B4 !important; /* Matingkad na Hot Pink Background */
         border-radius: 8px !important;
