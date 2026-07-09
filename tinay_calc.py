@@ -51,7 +51,7 @@ for col in required_columns:
         st.session_state["df_master_cache"][col] = None
 df_master = st.session_state["df_master_cache"][required_columns]
 
-# --- POPUP SAFETY CONFIRMATION MODAL ---
+# --- POPUP SAFETY CONFIRMATION MODAL WITH DUPLICATE DETECTION ---
 @st.dialog("⚠️ Final Confirmation Required")
 def confirm_save_dialog():
     prod_name = st.session_state.get("prod_name_key", "").strip()
@@ -61,7 +61,18 @@ def confirm_save_dialog():
     profit = capital * (markup / 100.0)
     retail_price = capital + profit
 
-    st.warning("Are you absolutely sure you want to write this product entry to your Master Price List?")
+    # Check if the product name already exists in the current dataframe cache
+    existing_df = st.session_state["df_master_cache"]
+    is_duplicate = False
+    if not existing_df.empty and "Product Name" in existing_df.columns:
+        is_duplicate = prod_name.lower() in existing_df["Product Name"].astype(str).str.lower().str.strip().values
+
+    if is_duplicate:
+        st.error(f"🔄 **DUPLICATE DETECTED**: '{prod_name}' already exists in your master list!")
+        st.write("Confirming below will **overwrite and change** its current price logs with your new values.")
+    else:
+        st.warning("Are you absolutely sure you want to write this product entry to your Master Price List?")
+        
     st.markdown(f"""
     * **🛒 Item Name:** {prod_name}
     * **💰 Capital Cost:** ₱{capital:,.2f}
@@ -78,19 +89,24 @@ def confirm_save_dialog():
         if st.button("🔥 Yes, Confirm Save", type="primary", use_container_width=True):
             with st.spinner("Synchronizing directly with your Cloud Spreadsheet..."):
                 
-                # 1. Generate an explicit, structured DataFrame matching your exact column layouts
-                new_entry = pd.DataFrame([{
+                new_row_data = {
                     "Product Name": prod_name,
                     "Capital Cost": f"₱{capital:,.2f}",
                     "Markup": f"{markup}%",
                     "Profit": f"₱{profit:,.2f}",
                     "Selling Price": f"₱{retail_price:,.2f}"
-                }])
+                }
                 
-                # 2. Force local memory compilation so rows display on screen instantly
-                st.session_state["df_master_cache"] = pd.concat([st.session_state["df_master_cache"], new_entry], ignore_index=True)
+                if is_duplicate:
+                    idx_match = st.session_state["df_master_cache"][
+                        st.session_state["df_master_cache"]["Product Name"].astype(str).str.lower().str.strip() == prod_name.lower()
+                    ].index
+                    for col in required_columns:
+                        st.session_state["df_master_cache"].loc[idx_match, col] = new_row_data[col]
+                else:
+                    new_entry = pd.DataFrame([new_row_data])
+                    st.session_state["df_master_cache"] = pd.concat([st.session_state["df_master_cache"], new_entry], ignore_index=True)
                 
-                # 3. DIRECT BACKUP SYNC: Sends a GET append route call to write directly into Google Sheets
                 try:
                     BACKEND_PIPELINE = "https://google.com"
                     requests.get(BACKEND_PIPELINE, params={
@@ -100,16 +116,17 @@ def confirm_save_dialog():
                 except:
                     pass
                 
-                st.toast(f"✅ Successfully saved '{prod_name}' onto your price grid layout!")
+                if is_duplicate:
+                    st.toast(f"🔄 Successfully updated pricing for '{prod_name}'!")
+                else:
+                    st.toast(f"✅ Successfully saved '{prod_name}' onto your price grid layout!")
                 
-                # Wipe cache values so entry fields reset completely
                 st.session_state["prod_name_key"] = ""
                 st.session_state["capital_key"] = 0.0
                 st.session_state["markup_key"] = 10.0
                 
                 time.sleep(1.5)
                 st.rerun()
-
 # =========================================================
 # TAB 1: SMART PRICE CALCULATOR
 with tab1:
@@ -161,4 +178,31 @@ with tab2:
     if df_clean.empty:
         st.info("Your Google Sheet is connected! Use Tab 1 to insert your first item, then refresh.")
     else:
-        st.dataframe(df_clean, use_container_width=True, hide_index=True)
+        # INTERACTIVE SEARCH BAR
+        search_query = st.text_input("🔍 Search Product Name...", placeholder="Type to filter list live...")
+        
+        if search_query.strip():
+            df_display = df_clean[df_clean["Product Name"].str.contains(search_query.strip(), case=False, na=False)]
+        else:
+            df_display = df_clean.copy()
+            
+        st.dataframe(df_display, use_container_width=True, hide_index=True)
+        
+        # SECURE DELETING FUNCTION PANEL
+        st.markdown("---")
+        with st.expander("🛠️ Admin Controls: Remove Items From Database List"):
+            all_products_list = df_clean["Product Name"].unique().tolist()
+            product_to_delete = st.selectbox("Select a product name item to permanently delete:", options=["-- Choose Product --"] + all_products_list)
+            
+            delete_btn = st.button("❌ Execute Delete Selected Product", type="secondary", use_container_width=True)
+            
+            if delete_btn:
+                if product_to_delete != "-- Choose Product --":
+                    st.session_state["df_master_cache"] = st.session_state["df_master_cache"][
+                        st.session_state["df_master_cache"]["Product Name"].astype(str).str.strip() != product_to_delete
+                    ]
+                    st.toast(f"🗑️ Cleaned '{product_to_delete}' out of your active memory list registers!")
+                    time.sleep(1.0)
+                    st.rerun()
+                else:
+                    st.warning("Please choose a valid product name choice tracking element row above first.")
