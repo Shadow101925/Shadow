@@ -79,7 +79,7 @@ with tab1:
                     "selling": round(retail_price, 2)
                 }
                 
-                WEBHOOK_URL = "https://google.com"
+                WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbzO0lSxhF4KBZPtyOpXEQgb18Ha74KLKMMnekvpndxsogEnjmDHZalITOk0WYVpJdaowg/exec"
                 
                 with st.spinner("Uploading row entry directly to your cloud data books..."):
                     try:
