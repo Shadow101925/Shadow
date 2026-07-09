@@ -34,11 +34,11 @@ st.markdown("""
         color: #1E1E1E !important; 
     }
     
-    /* LAHAT NG BUTTON TEXT (Kalkulador, Cancel, at Admin Delete Buttons ay Puwersahang Puti) */
-    button, .stButton button, .stDialog button, div[data-testid="stDialog"] button {
-        color: #FFFFFF !important; 
+    /* Text sa loob ng Cancel button (Puwersahang Puti) */
+    .stDialog button, div[data-testid="stDialog"] button {
+        color: #FFFFFF !important;
     }
-    button p, .stButton button p, .stDialog button p, div[data-testid="stDialog"] button p {
+    .stDialog button p, div[data-testid="stDialog"] button p {
         color: #FFFFFF !important;
         font-weight: bold !important;
     }
@@ -87,22 +87,23 @@ st.markdown("Calculate wholesale item prices and manage your master store retail
 tab1, tab2 = st.tabs(["📝 Price Calculator", "📊 Price Master List"])
 
 # =========================================================
-# SYSTEM COMPATIBILITY CONFIGURATION (DIRECT CLOUD RECOVERY - FIXED)
-SHEET_ID = "14XUh3otWt1EoVM3RuLPceHhAaKF5iigOQO44mMcN2Fo"
-# FIXED: Ibinabalik ang orihinal na subok na gviz/tq endpoint para basahin ang Sheet1 nang direkta
-csv_url = f"https://google.com{SHEET_ID}/gviz/tq?tqx=out:csv&sheet=Sheet1&t={int(time.time())}"
-
-WEBHOOK_URL = "https://google.com"
+# CRITICAL DIRECT SYSTEM CONNECTORS
+# 🚀 PURELY UPDATED ENGINE PARAMETERS
+WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbzKvNDozq_GfNiJ1EMIrYdU3IEYWOXOT22yBh00mGsK4uF5dbGazT0hq4Ul2d5dYnHCuQ/exec"
 # =========================================================
 
 # --- HIGH-RELIABILITY LIVE REFRESH DATA ENGINE ---
 def fetch_live_matrix():
     try:
-        # Gumagamit ng purong browser headers para i-bypass ang scraper blocking ni Google
-        headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
-        response = requests.get(csv_url, headers=headers, timeout=12)
-        if response.status_code == 200 and len(response.text.strip()) > 5:
-            df = pd.read_csv(io.StringIO(response.text))
+        headers = {"User-Agent": "Mozilla/5.0"}
+        # Kinukuha ang listahan diretso sa bagong doGet function ng script
+        response = requests.get(f"{WEBHOOK_URL}?t={int(time.time())}", headers=headers, timeout=12)
+        if response.status_code == 200:
+            data_json = response.json()
+            if not data_json or len(data_json) == 0 or isinstance(data_json, dict):
+                return pd.DataFrame(columns=["Product Name", "Capital Cost", "Markup", "Profit", "Selling Price"])
+                
+            df = pd.DataFrame(data_json)
             df.columns = df.columns.str.strip().str.lower().str.replace(" ", "")
             
             mapping = {
@@ -118,7 +119,6 @@ def fetch_live_matrix():
         pass
     return pd.DataFrame(columns=["Product Name", "Capital Cost", "Markup", "Profit", "Selling Price"])
 
-# Kukuha ng sariwang data sa bawat pagbuka o pagsave
 if "df_master_cache" not in st.session_state or st.session_state.get("trigger_reload", False):
     st.session_state["df_master_cache"] = fetch_live_matrix()
     st.session_state["trigger_reload"] = False
@@ -177,7 +177,7 @@ def confirm_save_dialog():
                 }
                 
                 try:
-                    # Gagamit ng malinis na POST request para piliting isulat ni Google ang row data
+                    # Ginagamit ang POST request para i-shoot ang JSON data sa bagong doPost function sa Google
                     response = requests.post(WEBHOOK_URL, json=payload, timeout=15)
                     st.session_state["trigger_reload"] = True
                     st.toast(f"✅ Successfully saved '{prod_name}' directly to your Sheet!")
@@ -245,6 +245,7 @@ with tab2:
         search_query = st.text_input("🔍 Search Product Name...", placeholder="Type to filter list live...")
         
         if search_query.strip():
+            # Apply dynamic string matching filter line tracking live record
             df_display = df_clean[df_clean["Product Name"].str.contains(search_query.strip(), case=False, na=False)]
         else:
             df_display = df_clean.copy()
