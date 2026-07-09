@@ -12,25 +12,28 @@ st.markdown("Calculate wholesale item prices and manage your master store retail
 tab1, tab2 = st.tabs(["📝 Price Calculator", "📊 Price Master List"])
 
 # =========================================================
-# SYSTEM COMPATIBILITY ENGINE (Bypasses /exec webhooks entirely)
+# CRITICAL DIRECT HARDCODED PIPELINE CONNECTORS
+# Bypasses the Streamlit Secrets panel completely to avoid layout blocks
 SHEET_ID = "14XUh3otWt1EoVM3RuLPceHhAaKF5iigOQO44mMcN2Fo"
+WEBHOOK_URL = "https://google.com"
 # =========================================================
 
 # --- HIGH-RELIABILITY LIVE REFRESH DATA ENGINE ---
 def fetch_live_matrix():
     try:
-        # Standard visualization link format to pull row elements directly from Sheet1
-        export_url = f"https://google.com{SHEET_ID}/gviz/tq?tqx=out:csv&sheet=Sheet1&t={int(time.time())}"
+        # Standard visualization grid CSV path that bypasses web blocks natively
+        csv_url = f"https://google.com{SHEET_ID}/gviz/tq?tqx=out:csv&sheet=Sheet1&t={int(time.time())}"
         
+        # Mimics a real browser session so Google does not drop the request frame
         headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
         }
-        response = requests.get(export_url, headers=headers, timeout=12)
+        response = requests.get(csv_url, headers=headers, timeout=12)
         
         if response.status_code == 200 and len(response.text.strip()) > 5:
             df = pd.read_csv(io.StringIO(response.text))
             
-            # Lower-case and clean whitespace values to safeguard header parsing checks
+            # Standardize column headers instantly to bypass case mismatching
             df.columns = df.columns.str.strip().str.lower().str.replace(" ", "")
             
             mapping = {
@@ -90,10 +93,6 @@ with tab1:
             elif not authorize_save:
                 st.error("⚠️ Data blocked! You must check the confirmation box above before clicking save.")
             else:
-                # COMPATIBILITY ROUTE: Appends metrics using a fallback GET pipeline execution profile
-                # This completely isolates the script runtime and removes 405 error blocks
-                WEBHOOK_URL = "https://google.com"
-                
                 payload = {
                     "product": prod_name.strip(),
                     "capital": capital,
@@ -102,17 +101,16 @@ with tab1:
                     "selling": round(retail_price, 2)
                 }
                 
-                with st.spinner("Uploading row entry directly to your cloud data books..."):
+                with st.spinner("Writing direct row entry to database ledger..."):
                     try:
-                        # Fires request utilizing URL-param appending to securely register rows
+                        # Fires data packet as direct web query parameters to clear out 405 error blocks completely
                         response = requests.get(WEBHOOK_URL, params=payload, timeout=15)
+                        
                         st.toast(f"✅ Successfully saved '{prod_name}' directly to your Sheet!")
                         time.sleep(1.5)
                         st.rerun()
                     except Exception as e:
-                        st.toast(f"✅ Entry logged successfully!")
-                        time.sleep(1.0)
-                        st.rerun()
+                        st.error("Network sync validation error. Refresh required.")
 
 # =========================================================
 # TAB 2: PRICE MASTER LIST
@@ -132,4 +130,5 @@ with tab2:
     if df_clean.empty:
         st.info("Your Google Sheet is connected! Use Tab 1 to insert your first item, then refresh.")
     else:
+        # Renders the finalized data points matching your Sheet1 rows completely
         st.dataframe(df_clean, use_container_width=True, hide_index=True)
