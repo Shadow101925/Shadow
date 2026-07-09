@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import requests
 import time
+import io
 
 # APP CONFIGURATION
 st.set_page_config(page_title="Tinay's Price Calculator", page_icon="🧮", layout="centered")
@@ -11,28 +12,35 @@ st.markdown("Calculate wholesale item prices and manage your master store retail
 tab1, tab2 = st.tabs(["📝 Price Calculator", "📊 Price Master List"])
 
 # =========================================================
-# CRITICAL DIRECT LINK CONFIGURATION (FULLY IMPLEMENTED)
+# CRITICAL DIRECT LINK CONFIGURATION
 WEBHOOK_URL = "https://google.com"
+SHEET_ID = "14XUh3otWt1EoVM3RuLPceHhAaKF5iigOQO44mMcN2Fo"
 # =========================================================
 
 # --- HIGH-RELIABILITY LIVE REFRESH DATA ENGINE ---
 def fetch_live_matrix():
     try:
-        # Appends a unique timestamp to completely bypass browser caching blocks
-        response = requests.get(f"{WEBHOOK_URL}?t={int(time.time())}", timeout=12)
-        if response.status_code == 200:
-            data_json = response.json()
-            df = pd.DataFrame(data_json)
+        # Standard format to force Google Sheets to output text records cleanly
+        export_url = f"https://google.com{SHEET_ID}/gviz/tq?tqx=out:csv&sheet=Sheet1&t={int(time.time())}"
+        
+        # Pull text tables straight into memory bypassing cache filters
+        headers = {"User-Agent": "Mozilla/5.0"}
+        response = requests.get(export_url, headers=headers, timeout=10)
+        
+        if response.status_code == 200 and len(response.text.strip()) > 5:
+            df = pd.read_csv(io.StringIO(response.text))
             
-            # Map column names to maintain exact UI structure uniformity
+            # Standardize column headers to handle layout mapping variances
+            df.columns = df.columns.str.strip().str.lower().str.replace(" ", "")
+            
             mapping = {
-                "productname": "Product Name", "product": "Product Name", "Product Name": "Product Name",
-                "capitalcost": "Capital Cost", "capital": "Capital Cost", "Capital Cost": "Capital Cost",
-                "markup": "Markup", "Markup": "Markup",
-                "profit": "Profit", "Profit": "Profit",
-                "sellingprice": "Selling Price", "selling": "Selling Price", "Selling Price": "Selling Price"
+                "productname": "Product Name", "product": "Product Name",
+                "capitalcost": "Capital Cost", "capital": "Capital Cost",
+                "markup": "Markup", "profit": "Profit",
+                "sellingprice": "Selling Price", "selling": "Selling Price"
             }
             df = df.rename(columns=mapping)
+            df = df.loc[:, ~df.columns.str.contains('^unnamed', na=False, case=False)]
             return df
     except Exception as e:
         pass
@@ -82,7 +90,6 @@ with tab1:
             elif not authorize_save:
                 st.error("⚠️ Data blocked! You must check the confirmation box above before clicking save.")
             else:
-                # Packages data points into URL parameters to eliminate the 405 error
                 payload = {
                     "product": prod_name,
                     "capital": capital,
@@ -93,9 +100,8 @@ with tab1:
                 
                 with st.spinner("Writing direct row entry to database ledger..."):
                     try:
-                        response = requests.get(WEBHOOK_URL, params=payload, timeout=15)
-                        # FIXED: If status code is 200, trigger clean entry reload instantly
-                        if response.status_code == 200:
+                        response = requests.post(WEBHOOK_URL, json=payload, timeout=15)
+                        if response.status_code == 200 or "Success" in response.text:
                             st.toast(f"✅ Successfully saved '{prod_name}' directly to your Sheet!")
                             time.sleep(1.5)
                             st.rerun()
@@ -113,6 +119,7 @@ with tab2:
     
     if not df_clean.empty and "Product Name" in df_clean.columns:
         df_clean["Product Name"] = df_clean["Product Name"].astype(str).str.strip()
+        # Drop completely blank artifact noise rows cleanly
         df_clean = df_clean[
             (df_clean["Product Name"] != "") & 
             (df_clean["Product Name"] != "None") & 
