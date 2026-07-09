@@ -7,7 +7,7 @@ import io
 # APP CONFIGURATION
 st.set_page_config(page_title="Tinay's Price Calculator", page_icon="🧮", layout="centered")
 
-# --- FIXED TEXT & POP-UP VISIBILITY STYLING ---
+# --- PINAKABAGONG VISIBILITY THEME STYLING (FIXED) ---
 st.markdown("""
     <style>
     /* Binabago ang background ng buong app */
@@ -20,21 +20,17 @@ st.markdown("""
         color: #1E1E1E !important; /* Dark Charcoal Text */
     }
     
-    /* FIX PARA SA POP-UP MODAL: Puwersahang ginagawang Puti ang background ng Pop-up */
-    div[role="dialog"] {
+    /* 🚀 TARGETING NEW DIALOG: Puwersahang ginagawang Puti ang background ng bagong Pop-up containers */
+    .stDialog > div, div[data-testid="stDialog"] > div, div[role="dialog"] {
         background-color: #FFFFFF !important; /* Pure White Background para sa Pop-up */
         border-radius: 12px !important;
-        box-shadow: 0px 10px 25px rgba(0,0,0,0.2) !important;
+        box-shadow: 0px 10px 25px rgba(0,0,0,0.3) !important;
     }
     
-    /* Siguraduhing madilim at malinaw ang lahat ng text, listahan, at header SA LOOB ng Pop-up */
-    div[role="dialog"] h1, 
-    div[role="dialog"] h2, 
-    div[role="dialog"] h3, 
-    div[role="dialog"] p, 
-    div[role="dialog"] li, 
-    div[role="dialog"] span,
-    div[role="dialog"] div {
+    /* Siguraduhing madilim at malinaw ang lahat ng text sa loob ng bagong Pop-up model layout */
+    .stDialog h1, .stDialog h2, .stDialog h3, .stDialog p, .stDialog li, .stDialog span, .stDialog div,
+    div[data-testid="stDialog"] h1, div[data-testid="stDialog"] h2, div[data-testid="stDialog"] h3, 
+    div[data-testid="stDialog"] p, div[data-testid="stDialog"] li, div[data-testid="stDialog"] span, div[data-testid="stDialog"] div {
         color: #1E1E1E !important; /* Dark Charcoal para kitang-kita sa puting pop-up */
     }
     
