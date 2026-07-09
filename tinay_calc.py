@@ -7,7 +7,7 @@ import io
 # APP CONFIGURATION
 st.set_page_config(page_title="Tinay's Price Calculator", page_icon="🧮", layout="centered")
 
-# --- FIXED TEXT VISIBILITY THEME STYLING ---
+# --- FIXED TEXT & POP-UP VISIBILITY STYLING ---
 st.markdown("""
     <style>
     /* Binabago ang background ng buong app */
@@ -15,9 +15,27 @@ st.markdown("""
         background-color: #FFF0F5; /* Soft Lavender Pink */
     }
     
-    /* Pwersahang ginagawang itim/madilim ang lahat ng text para readable kahit anong phone setting */
+    /* Pwersahang ginagawang madilim ang text sa labas para readable sa pink background */
     h1, h2, h3, p, label, .stMarkdown, span {
         color: #1E1E1E !important; /* Dark Charcoal Text */
+    }
+    
+    /* FIX PARA SA POP-UP MODAL: Puwersahang ginagawang Puti ang background ng Pop-up */
+    div[role="dialog"] {
+        background-color: #FFFFFF !important; /* Pure White Background para sa Pop-up */
+        border-radius: 12px !important;
+        box-shadow: 0px 10px 25px rgba(0,0,0,0.2) !important;
+    }
+    
+    /* Siguraduhing madilim at malinaw ang lahat ng text, listahan, at header SA LOOB ng Pop-up */
+    div[role="dialog"] h1, 
+    div[role="dialog"] h2, 
+    div[role="dialog"] h3, 
+    div[role="dialog"] p, 
+    div[role="dialog"] li, 
+    div[role="dialog"] span,
+    div[role="dialog"] div {
+        color: #1E1E1E !important; /* Dark Charcoal para kitang-kita sa puting pop-up */
     }
     
     /* Disenyo ng buong Tab Section */
@@ -32,7 +50,7 @@ st.markdown("""
         background-color: #FFD1DC !important; /* Soft Pastel Baby Pink para sa inactive tab */
         border-radius: 8px 8px 0px 0px;
         padding: 10px 24px;
-        color: #444444 !important; /* Malinaw na dark gray text */
+        color: #444444 !important;
         font-weight: normal;
         border: none !important;
         transition: all 0.3s ease;
@@ -41,12 +59,12 @@ st.markdown("""
     /* Disenyo para sa SELECTED o ACTIVE Tab */
     .stTabs [aria-selected="true"] {
         background-color: #FF69B4 !important; /* Matingkad na Hot Pink para sa Selected Tab */
-        color: #FFFFFF !important; /* Puting text para kitang-kita sa matingkad na pink */
+        color: #FFFFFF !important; /* Puting text para litaw */
         font-weight: bold !important;
         box-shadow: 0px 4px 10px rgba(255, 105, 180, 0.3);
     }
     
-    /* Tinatanggal ang pangit na pulang underline line sa ilalim ng tabs */
+    /* Tinatanggal ang pulang underline line sa ilalim ng tabs */
     .stTabs [data-baseweb="tab-highlight"] {
         background-color: transparent !important;
     }
