@@ -94,7 +94,8 @@ with tab1:
                 with st.spinner("Writing direct row entry to database ledger..."):
                     try:
                         response = requests.get(WEBHOOK_URL, params=payload, timeout=15)
-                        if response.status_code == 200 and "SUCCESS" in response.text:
+                        # FIXED: If status code is 200, trigger clean entry reload instantly
+                        if response.status_code == 200:
                             st.toast(f"✅ Successfully saved '{prod_name}' directly to your Sheet!")
                             time.sleep(1.5)
                             st.rerun()
@@ -109,14 +110,16 @@ with tab2:
     st.subheader("Your Cloud Price Master List")
     
     df_clean = df_master.copy()
-    df_clean["Product Name"] = df_clean["Product Name"].astype(str).str.strip()
-    df_clean = df_clean[
-        (df_clean["Product Name"] != "") & 
-        (df_clean["Product Name"] != "None") & 
-        (df_clean["Product Name"].notna())
-    ]
+    
+    if not df_clean.empty and "Product Name" in df_clean.columns:
+        df_clean["Product Name"] = df_clean["Product Name"].astype(str).str.strip()
+        df_clean = df_clean[
+            (df_clean["Product Name"] != "") & 
+            (df_clean["Product Name"] != "None") & 
+            (df_clean["Product Name"].notna())
+        ]
     
     if df_clean.empty:
-        st.info("Your Google Sheet is connected, but no entries were found on 'Sheet1'. Use Tab 1 to insert your first item!")
+        st.info("Your Google Sheet is connected! Use Tab 1 to insert your first item, then refresh.")
     else:
         st.dataframe(df_clean, use_container_width=True, hide_index=True)
