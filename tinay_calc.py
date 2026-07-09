@@ -6,13 +6,40 @@ import io
 
 # APP CONFIGURATION
 st.set_page_config(page_title="Tinay's Price Calculator", page_icon="🧮", layout="centered")
+
+# --- CUSTOM PINK THEME STYLING (BAGO) ---
+st.markdown("""
+    <style>
+    /* Binabago ang background ng buong app */
+    .stApp {
+        background-color: #FFF0F5; /* Napakagandang Pastel Soft Pink */
+    }
+    /* Binabago ang kulay ng mga tabs para bumagay */
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 24px;
+    }
+    .stTabs [data-baseweb="tab"] {
+        height: 50px;
+        white-space: pre-wrap;
+        background-color: #FFE4E1; /* Misty Rose Pink para sa tab buttons */
+        border-radius: 8px 8px 0px 0px;
+        padding: 10px 20px;
+        color: #333333;
+    }
+    .stTabs [aria-selected="true"] {
+        background-color: #FFB6C1 !important; /* Mas matingkad na pink kapag active ang tab */
+        font-weight: bold;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
 st.title("🧮 Tinay's Personal Retail Price Calculator")
 st.markdown("Calculate wholesale item prices and manage your master store retail price book.")
 
 tab1, tab2 = st.tabs(["📝 Price Calculator", "📊 Price Master List"])
 
 # =========================================================
-# CRITICAL DIRECT SYSTEM CONNECTORS (FULLY UPDATED WITH YOUR NEW URL)
+# CRITICAL DIRECT SYSTEM CONNECTORS
 SHEET_ID = "14XUh3otWt1EoVM3RuLPceHhAaKF5iigOQO44mMcN2Fo"
 WEBHOOK_URL = "https://google.com"
 # =========================================================
@@ -21,7 +48,6 @@ WEBHOOK_URL = "https://google.com"
 def fetch_live_matrix():
     try:
         headers = {"User-Agent": "Mozilla/5.0"}
-        # Appends a unique timestamp parameter to completely bypass browser caching blocks
         response = requests.get(f"{WEBHOOK_URL}?t={int(time.time())}", headers=headers, timeout=12)
         if response.status_code == 200:
             data_json = response.json()
@@ -29,8 +55,6 @@ def fetch_live_matrix():
                 return pd.DataFrame(columns=["Product Name", "Capital Cost", "Markup", "Profit", "Selling Price"])
                 
             df = pd.DataFrame(data_json)
-            
-            # Clean case structural formatting layout variances instantly
             df.columns = df.columns.str.strip().str.lower().str.replace(" ", "")
             
             mapping = {
@@ -46,11 +70,9 @@ def fetch_live_matrix():
         pass
     return pd.DataFrame(columns=["Product Name", "Capital Cost", "Markup", "Profit", "Selling Price"])
 
-# Store data into the operational session cache profile to handle direct frame mutations
 if "df_master_cache" not in st.session_state:
     st.session_state["df_master_cache"] = fetch_live_matrix()
 
-# Maintain structure matching the calculator keys
 required_columns = ["Product Name", "Capital Cost", "Markup", "Profit", "Selling Price"]
 for col in required_columns:
     if col not in st.session_state["df_master_cache"].columns:
@@ -67,7 +89,6 @@ def confirm_save_dialog():
     profit = capital * (markup / 100.0)
     retail_price = capital + profit
 
-    # Check if the product name already exists in the current dataframe cache
     existing_df = st.session_state["df_master_cache"]
     is_duplicate = False
     if not existing_df.empty and "Product Name" in existing_df.columns:
@@ -103,7 +124,6 @@ def confirm_save_dialog():
                     "Selling Price": f"₱{retail_price:,.2f}"
                 }
                 
-                # Overwrite matching old record locally or append as entirely brand new row entry
                 if is_duplicate:
                     idx_match = st.session_state["df_master_cache"][
                         st.session_state["df_master_cache"]["Product Name"].astype(str).str.lower().str.strip() == prod_name.lower()
@@ -114,7 +134,6 @@ def confirm_save_dialog():
                     new_entry = pd.DataFrame([new_row_data])
                     st.session_state["df_master_cache"] = pd.concat([st.session_state["df_master_cache"], new_entry], ignore_index=True)
                 
-                # DIRECT BACKUP SYNC: Sends a GET append route call to write directly into Google Sheets
                 try:
                     requests.get(WEBHOOK_URL, params={
                         "product": prod_name, "capital": capital, "markup": f"{markup}%",
@@ -128,7 +147,6 @@ def confirm_save_dialog():
                 else:
                     st.toast(f"✅ Successfully saved '{prod_name}' onto your price grid layout!")
                 
-                # Wipe cache values so entry fields reset completely
                 st.session_state["prod_name_key"] = ""
                 st.session_state["capital_key"] = 0.0
                 st.session_state["markup_key"] = 10.0
@@ -190,7 +208,6 @@ with tab2:
         search_query = st.text_input("🔍 Search Product Name...", placeholder="Type to filter list live...")
         
         if search_query.strip():
-            # Apply dynamic string matching filter line tracking live record
             df_display = df_clean[df_clean["Product Name"].str.contains(search_query.strip(), case=False, na=False)]
         else:
             df_display = df_clean.copy()
