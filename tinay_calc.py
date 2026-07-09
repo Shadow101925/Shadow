@@ -12,27 +12,33 @@ st.markdown("Calculate wholesale item prices and manage your master store retail
 tab1, tab2 = st.tabs(["📝 Price Calculator", "📊 Price Master List"])
 
 # =========================================================
-# CRITICAL DIRECT SYSTEM CONNECTORS
+# CRITICAL DIRECT SYSTEM CONNECTORS (FULLY UPDATED WITH YOUR NEW URL)
 SHEET_ID = "14XUh3otWt1EoVM3RuLPceHhAaKF5iigOQO44mMcN2Fo"
-# Direct public sheet layout query path forcing explicit target on Sheet1
-csv_url = f"https://google.com{SHEET_ID}/gviz/tq?tqx=out:csv&sheet=Sheet1&t={int(time.time())}"
+WEBHOOK_URL = "https://google.com"
 # =========================================================
 
 # --- HIGH-RELIABILITY LIVE REFRESH DATA ENGINE ---
 def fetch_live_matrix():
     try:
         headers = {"User-Agent": "Mozilla/5.0"}
-        response = requests.get(csv_url, headers=headers, timeout=10)
-        
-        if response.status_code == 200 and len(response.text.strip()) > 5:
-            df = pd.read_csv(io.StringIO(response.text))
+        # Appends a unique timestamp parameter to completely bypass browser caching blocks
+        response = requests.get(f"{WEBHOOK_URL}?t={int(time.time())}", headers=headers, timeout=12)
+        if response.status_code == 200:
+            data_json = response.json()
+            if not data_json or len(data_json) == 0 or isinstance(data_json, dict):
+                return pd.DataFrame(columns=["Product Name", "Capital Cost", "Markup", "Profit", "Selling Price"])
+                
+            df = pd.DataFrame(data_json)
+            
+            # Clean case structural formatting layout variances instantly
             df.columns = df.columns.str.strip().str.lower().str.replace(" ", "")
             
             mapping = {
-                "productname": "Product Name", "product": "Product Name",
-                "capitalcost": "Capital Cost", "capital": "Capital Cost",
-                "markup": "Markup", "profit": "Profit",
-                "sellingprice": "Selling Price", "selling": "Selling Price"
+                "productname": "Product Name", "product": "Product Name", "product name": "Product Name",
+                "capitalcost": "Capital Cost", "capital": "Capital Cost", "capital cost": "Capital Cost",
+                "markup": "Markup", "markup": "Markup",
+                "profit": "Profit", "profit": "Profit",
+                "sellingprice": "Selling Price", "selling": "Selling Price", "selling price": "Selling Price"
             }
             df = df.rename(columns=mapping)
             return df.loc[:, ~df.columns.str.contains('^unnamed', na=False, case=False)]
@@ -97,6 +103,7 @@ def confirm_save_dialog():
                     "Selling Price": f"₱{retail_price:,.2f}"
                 }
                 
+                # Overwrite matching old record locally or append as entirely brand new row entry
                 if is_duplicate:
                     idx_match = st.session_state["df_master_cache"][
                         st.session_state["df_master_cache"]["Product Name"].astype(str).str.lower().str.strip() == prod_name.lower()
@@ -107,12 +114,12 @@ def confirm_save_dialog():
                     new_entry = pd.DataFrame([new_row_data])
                     st.session_state["df_master_cache"] = pd.concat([st.session_state["df_master_cache"], new_entry], ignore_index=True)
                 
+                # DIRECT BACKUP SYNC: Sends a GET append route call to write directly into Google Sheets
                 try:
-                    BACKEND_PIPELINE = "https://google.com"
-                    requests.get(BACKEND_PIPELINE, params={
+                    requests.get(WEBHOOK_URL, params={
                         "product": prod_name, "capital": capital, "markup": f"{markup}%",
                         "profit": round(profit, 2), "selling": round(retail_price, 2)
-                    }, timeout=10)
+                    }, timeout=15)
                 except:
                     pass
                 
@@ -121,6 +128,7 @@ def confirm_save_dialog():
                 else:
                     st.toast(f"✅ Successfully saved '{prod_name}' onto your price grid layout!")
                 
+                # Wipe cache values so entry fields reset completely
                 st.session_state["prod_name_key"] = ""
                 st.session_state["capital_key"] = 0.0
                 st.session_state["markup_key"] = 10.0
@@ -182,6 +190,7 @@ with tab2:
         search_query = st.text_input("🔍 Search Product Name...", placeholder="Type to filter list live...")
         
         if search_query.strip():
+            # Apply dynamic string matching filter line tracking live record
             df_display = df_clean[df_clean["Product Name"].str.contains(search_query.strip(), case=False, na=False)]
         else:
             df_display = df_clean.copy()
