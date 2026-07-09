@@ -7,12 +7,17 @@ import io
 # APP CONFIGURATION
 st.set_page_config(page_title="Tinay's Price Calculator", page_icon="🧮", layout="centered")
 
-# --- FIXED CUTE PINK THEME STYLING ---
+# --- FIXED TEXT VISIBILITY THEME STYLING ---
 st.markdown("""
     <style>
     /* Binabago ang background ng buong app */
     .stApp {
         background-color: #FFF0F5; /* Soft Lavender Pink */
+    }
+    
+    /* Pwersahang ginagawang itim/madilim ang lahat ng text para readable kahit anong phone setting */
+    h1, h2, h3, p, label, .stMarkdown, span {
+        color: #1E1E1E !important; /* Dark Charcoal Text */
     }
     
     /* Disenyo ng buong Tab Section */
@@ -27,16 +32,16 @@ st.markdown("""
         background-color: #FFD1DC !important; /* Soft Pastel Baby Pink para sa inactive tab */
         border-radius: 8px 8px 0px 0px;
         padding: 10px 24px;
-        color: #555555 !important;
+        color: #444444 !important; /* Malinaw na dark gray text */
         font-weight: normal;
         border: none !important;
         transition: all 0.3s ease;
     }
     
-    /* FIX: Disenyo para sa SELECTED o ACTIVE Tab (Matingkad at Halata) */
+    /* Disenyo para sa SELECTED o ACTIVE Tab */
     .stTabs [aria-selected="true"] {
         background-color: #FF69B4 !important; /* Matingkad na Hot Pink para sa Selected Tab */
-        color: #FFFFFF !important; /* Puting text para kitang-kita */
+        color: #FFFFFF !important; /* Puting text para kitang-kita sa matingkad na pink */
         font-weight: bold !important;
         box-shadow: 0px 4px 10px rgba(255, 105, 180, 0.3);
     }
