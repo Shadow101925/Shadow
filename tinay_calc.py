@@ -6,6 +6,81 @@ import io
 
 # APP CONFIGURATION
 st.set_page_config(page_title="Tinay's Price Calculator", page_icon="🧮", layout="centered")
+
+# --- KUMPLETO AT MATATAG NA DISENYO NG KULAY PINK ---
+st.markdown("""
+    <style>
+    /* Background ng buong App */
+    .stApp {
+        background-color: #FFF0F5; 
+    }
+    
+    /* Kulay ng mga pangunahing sulat sa app */
+    h1, h2, h3, p, label, .stMarkdown, span {
+        color: #1E1E1E !important; 
+    }
+    
+    /* Background ng Pop-up (Puwersahang Puti para mabasa sa Dark Mode ng Phone) */
+    .stDialog > div, div[data-testid="stDialog"] > div, div[role="dialog"] {
+        background-color: #FFFFFF !important; 
+        border-radius: 12px !important;
+        box-shadow: 0px 10px 25px rgba(0,0,0,0.3) !important;
+    }
+    
+    /* Kulay ng text sa loob ng Pop-up dialog */
+    .stDialog h1, .stDialog h2, .stDialog h3, .stDialog p, .stDialog li, .stDialog span, .stDialog div,
+    div[data-testid="stDialog"] h1, div[data-testid="stDialog"] h2, div[data-testid="stDialog"] h3, 
+    div[data-testid="stDialog"] p, div[data-testid="stDialog"] li, div[data-testid="stDialog"] span, div[data-testid="stDialog"] div {
+        color: #1E1E1E !important; 
+    }
+    
+    /* Text sa loob ng Cancel button (Puwersahang Puti) */
+    .stDialog button, div[data-testid="stDialog"] button {
+        color: #FFFFFF !important;
+    }
+    .stDialog button p, div[data-testid="stDialog"] button p {
+        color: #FFFFFF !important;
+        font-weight: bold !important;
+    }
+    
+    /* Success Toast sa ilalim (Matingkad na Pink na may Puting Text) */
+    div[data-testid="stToast"], [data-testid="stToast"] > div {
+        background-color: #FF69B4 !important; 
+        border-radius: 8px !important;
+        border: none !important;
+    }
+    div[data-testid="stToast"] * {
+        color: #FFFFFF !important; 
+        font-weight: bold !important;
+    }
+    
+    /* Tab Buttons Disenyo */
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 12px;
+        background-color: transparent;
+    }
+    .stTabs [data-baseweb="tab"] {
+        height: 48px;
+        background-color: #FFD1DC !important; 
+        border-radius: 8px 8px 0px 0px;
+        padding: 10px 24px;
+        color: #444444 !important;
+        font-weight: normal;
+        border: none !important;
+        transition: all 0.3s ease;
+    }
+    .stTabs [aria-selected="true"] {
+        background-color: #FF69B4 !important; 
+        color: #FFFFFF !important; 
+        font-weight: bold !important;
+        box-shadow: 0px 4px 10px rgba(255, 105, 180, 0.3);
+    }
+    .stTabs [data-baseweb="tab-highlight"] {
+        background-color: transparent !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
 st.title("🧮 Tinay's Personal Retail Price Calculator")
 st.markdown("Calculate wholesale item prices and manage your master store retail price book.")
 
@@ -13,19 +88,22 @@ tab1, tab2 = st.tabs(["📝 Price Calculator", "📊 Price Master List"])
 
 # =========================================================
 # CRITICAL DIRECT SYSTEM CONNECTORS
-SHEET_ID = "14XUh3otWt1EoVM3RuLPceHhAaKF5iigOQO44mMcN2Fo"
-WEBHOOK_URL = "https://google.com"
+# 🚀 PURELY UPDATED ENGINE PARAMETERS
+WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbzKvNDozq_GfNiJ1EMIrYdU3IEYWOXOT22yBh00mGsK4uF5dbGazT0hq4Ul2d5dYnHCuQ/exec"
 # =========================================================
 
 # --- HIGH-RELIABILITY LIVE REFRESH DATA ENGINE ---
 def fetch_live_matrix():
     try:
         headers = {"User-Agent": "Mozilla/5.0"}
-        csv_url = f"https://google.com{SHEET_ID}/gviz/tq?tqx=out:csv&sheet=Sheet1&t={int(time.time())}"
-        response = requests.get(csv_url, headers=headers, timeout=10)
-        
-        if response.status_code == 200 and len(response.text.strip()) > 5:
-            df = pd.read_csv(io.StringIO(response.text))
+        # Kinukuha ang listahan diretso sa bagong doGet function ng script
+        response = requests.get(f"{WEBHOOK_URL}?t={int(time.time())}", headers=headers, timeout=12)
+        if response.status_code == 200:
+            data_json = response.json()
+            if not data_json or len(data_json) == 0 or isinstance(data_json, dict):
+                return pd.DataFrame(columns=["Product Name", "Capital Cost", "Markup", "Profit", "Selling Price"])
+                
+            df = pd.DataFrame(data_json)
             df.columns = df.columns.str.strip().str.lower().str.replace(" ", "")
             
             mapping = {
@@ -41,14 +119,17 @@ def fetch_live_matrix():
         pass
     return pd.DataFrame(columns=["Product Name", "Capital Cost", "Markup", "Profit", "Selling Price"])
 
-if "df_master_cache" not in st.session_state:
+if "df_master_cache" not in st.session_state or st.session_state.get("trigger_reload", False):
     st.session_state["df_master_cache"] = fetch_live_matrix()
+    st.session_state["trigger_reload"] = False
+
+df_master = st.session_state["df_master_cache"]
 
 required_columns = ["Product Name", "Capital Cost", "Markup", "Profit", "Selling Price"]
 for col in required_columns:
-    if col not in st.session_state["df_master_cache"].columns:
-        st.session_state["df_master_cache"][col] = None
-df_master = st.session_state["df_master_cache"][required_columns]
+    if col not in df_master.columns:
+        df_master[col] = None
+df_master = df_master[required_columns]
 
 # --- POPUP SAFETY CONFIRMATION MODAL WITH DUPLICATE DETECTION ---
 @st.dialog("⚠️ Final Confirmation Required")
@@ -85,38 +166,23 @@ def confirm_save_dialog():
             st.rerun()
     with col2:
         if st.button("🔥 Yes, Confirm Save", type="primary", use_container_width=True):
-            with st.spinner("Synchronizing directly with your Cloud Spreadsheet..."):
+            with st.spinner("Writing permanently to Google Cloud Spreadsheet..."):
                 
-                new_row_data = {
-                    "Product Name": prod_name,
-                    "Capital Cost": f"₱{capital:,.2f}",
-                    "Markup": f"{markup}%",
-                    "Profit": f"₱{profit:,.2f}",
-                    "Selling Price": f"₱{retail_price:,.2f}"
+                payload = {
+                    "product": prod_name,
+                    "capital": capital,
+                    "markup": f"{markup}%",
+                    "profit": round(profit, 2),
+                    "selling": round(retail_price, 2)
                 }
                 
-                if is_duplicate:
-                    idx_match = st.session_state["df_master_cache"][
-                        st.session_state["df_master_cache"]["Product Name"].astype(str).str.lower().str.strip() == prod_name.lower()
-                    ].index
-                    for col in required_columns:
-                        st.session_state["df_master_cache"].loc[idx_match, col] = new_row_data[col]
-                else:
-                    new_entry = pd.DataFrame([new_row_data])
-                    st.session_state["df_master_cache"] = pd.concat([st.session_state["df_master_cache"], new_entry], ignore_index=True)
-                
                 try:
-                    requests.get(WEBHOOK_URL, params={
-                        "product": prod_name, "capital": capital, "markup": f"{markup}%",
-                        "profit": round(profit, 2), "selling": round(retail_price, 2)
-                    }, timeout=15)
-                except:
-                    pass
-                
-                if is_duplicate:
-                    st.toast(f"🔄 Successfully updated pricing for '{prod_name}'!")
-                else:
-                    st.toast(f"✅ Successfully saved '{prod_name}' onto your price grid layout!")
+                    # Ginagamit ang POST request para i-shoot ang JSON data sa bagong doPost function sa Google
+                    response = requests.post(WEBHOOK_URL, json=payload, timeout=15)
+                    st.session_state["trigger_reload"] = True
+                    st.toast(f"✅ Successfully saved '{prod_name}' directly to your Sheet!")
+                except Exception as e:
+                    st.error("Naging busy ang Google Server, pakisubukan ulit sa loob ng ilang segundo.")
                 
                 st.session_state["prod_name_key"] = ""
                 st.session_state["capital_key"] = 0.0
@@ -179,6 +245,7 @@ with tab2:
         search_query = st.text_input("🔍 Search Product Name...", placeholder="Type to filter list live...")
         
         if search_query.strip():
+            # Apply dynamic string matching filter line tracking live record
             df_display = df_clean[df_clean["Product Name"].str.contains(search_query.strip(), case=False, na=False)]
         else:
             df_display = df_clean.copy()
@@ -203,3 +270,4 @@ with tab2:
                     st.rerun()
                 else:
                     st.warning("Please choose a valid product name choice tracking element row above first.")
+
