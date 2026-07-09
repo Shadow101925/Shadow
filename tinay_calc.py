@@ -7,44 +7,43 @@ import io
 # APP CONFIGURATION
 st.set_page_config(page_title="Tinay's Price Calculator", page_icon="🧮", layout="centered")
 
-# --- PINAKABAGONG VISIBILITY THEME STYLING (FIXED ALL BUTTONS TEXT) ---
+# --- KUMPLETO AT MATATAG NA DISENYO NG KULAY PINK ---
 st.markdown("""
     <style>
-    /* Binabago ang background ng buong app */
+    /* Background ng buong App */
     .stApp {
-        background-color: #FFF0F5; /* Soft Lavender Pink */
+        background-color: #FFF0F5; 
     }
     
-    /* Pwersahang ginagawang madilim ang text sa labas para readable sa pink background */
+    /* Kulay ng mga pangunahing sulat sa app */
     h1, h2, h3, p, label, .stMarkdown, span {
-        color: #1E1E1E !important; /* Dark Charcoal Text */
+        color: #1E1E1E !important; 
     }
     
-    /* Puwersahang ginagawang Puti ang background ng bagong Pop-up containers */
+    /* Background ng Pop-up (Puwersahang Puti para mabasa sa Dark Mode ng Phone) */
     .stDialog > div, div[data-testid="stDialog"] > div, div[role="dialog"] {
         background-color: #FFFFFF !important; 
         border-radius: 12px !important;
         box-shadow: 0px 10px 25px rgba(0,0,0,0.3) !important;
     }
     
-    /* Siguraduhing madilim at malinaw ang lahat ng text sa loob ng Pop-up modal */
+    /* Kulay ng text sa loob ng Pop-up dialog */
     .stDialog h1, .stDialog h2, .stDialog h3, .stDialog p, .stDialog li, .stDialog span, .stDialog div,
     div[data-testid="stDialog"] h1, div[data-testid="stDialog"] h2, div[data-testid="stDialog"] h3, 
     div[data-testid="stDialog"] p, div[data-testid="stDialog"] li, div[data-testid="stDialog"] span, div[data-testid="stDialog"] div {
         color: #1E1E1E !important; 
     }
     
-    /* 🚀 FIX PARA SA LAHAT NG BUTTON TEXT (Kalkulador, Cancel, at Admin Delete Buttons) */
+    /* LAHAT NG BUTTON TEXT (Kalkulador, Cancel, at Admin Delete Buttons ay Puwersahang Puti) */
     button, .stButton button, .stDialog button, div[data-testid="stDialog"] button {
-        color: #FFFFFF !important; /* Puwersahang puti ang kulay ng mga letra sa pindutan */
+        color: #FFFFFF !important; 
     }
-    /* Siguraduhing nananatiling puti at makapal ang teksto kahit anong setting ng phone */
     button p, .stButton button p, .stDialog button p, div[data-testid="stDialog"] button p {
         color: #FFFFFF !important;
         font-weight: bold !important;
     }
     
-    /* FIX PARA SA SUCCESS TOAST NOTIFICATION */
+    /* Success Toast sa ilalim (Matingkad na Pink na may Puting Text) */
     div[data-testid="stToast"], [data-testid="stToast"] > div {
         background-color: #FF69B4 !important; 
         border-radius: 8px !important;
@@ -88,21 +87,22 @@ st.markdown("Calculate wholesale item prices and manage your master store retail
 tab1, tab2 = st.tabs(["📝 Price Calculator", "📊 Price Master List"])
 
 # =========================================================
-# CRITICAL DIRECT SYSTEM CONNECTORS
+# SYSTEM COMPATIBILITY CONFIGURATION (DIRECT CLOUD RECOVERY - FIXED)
+SHEET_ID = "14XUh3otWt1EoVM3RuLPceHhAaKF5iigOQO44mMcN2Fo"
+# FIXED: Ibinabalik ang orihinal na subok na gviz/tq endpoint para basahin ang Sheet1 nang direkta
+csv_url = f"https://google.com{SHEET_ID}/gviz/tq?tqx=out:csv&sheet=Sheet1&t={int(time.time())}"
+
 WEBHOOK_URL = "https://google.com"
 # =========================================================
 
 # --- HIGH-RELIABILITY LIVE REFRESH DATA ENGINE ---
 def fetch_live_matrix():
     try:
-        headers = {"User-Agent": "Mozilla/5.0"}
-        response = requests.get(f"{WEBHOOK_URL}?t={int(time.time())}", headers=headers, timeout=12)
-        if response.status_code == 200:
-            data_json = response.json()
-            if not data_json or len(data_json) == 0 or isinstance(data_json, dict):
-                return pd.DataFrame(columns=["Product Name", "Capital Cost", "Markup", "Profit", "Selling Price"])
-                
-            df = pd.DataFrame(data_json)
+        # Gumagamit ng purong browser headers para i-bypass ang scraper blocking ni Google
+        headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
+        response = requests.get(csv_url, headers=headers, timeout=12)
+        if response.status_code == 200 and len(response.text.strip()) > 5:
+            df = pd.read_csv(io.StringIO(response.text))
             df.columns = df.columns.str.strip().str.lower().str.replace(" ", "")
             
             mapping = {
@@ -118,6 +118,7 @@ def fetch_live_matrix():
         pass
     return pd.DataFrame(columns=["Product Name", "Capital Cost", "Markup", "Profit", "Selling Price"])
 
+# Kukuha ng sariwang data sa bawat pagbuka o pagsave
 if "df_master_cache" not in st.session_state or st.session_state.get("trigger_reload", False):
     st.session_state["df_master_cache"] = fetch_live_matrix()
     st.session_state["trigger_reload"] = False
@@ -176,6 +177,7 @@ def confirm_save_dialog():
                 }
                 
                 try:
+                    # Gagamit ng malinis na POST request para piliting isulat ni Google ang row data
                     response = requests.post(WEBHOOK_URL, json=payload, timeout=15)
                     st.session_state["trigger_reload"] = True
                     st.toast(f"✅ Successfully saved '{prod_name}' directly to your Sheet!")
