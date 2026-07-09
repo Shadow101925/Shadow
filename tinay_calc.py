@@ -7,43 +7,44 @@ import io
 # APP CONFIGURATION
 st.set_page_config(page_title="Tinay's Price Calculator", page_icon="🧮", layout="centered")
 
-# --- KUMPLETO AT MATATAG NA DISENYO NG KULAY PINK ---
+# --- PINAKABAGONG VISIBILITY THEME STYLING (FIXED ALL BUTTONS TEXT) ---
 st.markdown("""
     <style>
-    /* Background ng buong App */
+    /* Binabago ang background ng buong app */
     .stApp {
-        background-color: #FFF0F5; 
+        background-color: #FFF0F5; /* Soft Lavender Pink */
     }
     
-    /* Kulay ng mga pangunahing sulat sa app */
+    /* Pwersahang ginagawang madilim ang text sa labas para readable sa pink background */
     h1, h2, h3, p, label, .stMarkdown, span {
-        color: #1E1E1E !important; 
+        color: #1E1E1E !important; /* Dark Charcoal Text */
     }
     
-    /* Background ng Pop-up (Puwersahang Puti para mabasa sa Dark Mode ng Phone) */
+    /* Puwersahang ginagawang Puti ang background ng bagong Pop-up containers */
     .stDialog > div, div[data-testid="stDialog"] > div, div[role="dialog"] {
         background-color: #FFFFFF !important; 
         border-radius: 12px !important;
         box-shadow: 0px 10px 25px rgba(0,0,0,0.3) !important;
     }
     
-    /* Kulay ng text sa loob ng Pop-up dialog */
+    /* Siguraduhing madilim at malinaw ang lahat ng text sa loob ng Pop-up modal */
     .stDialog h1, .stDialog h2, .stDialog h3, .stDialog p, .stDialog li, .stDialog span, .stDialog div,
     div[data-testid="stDialog"] h1, div[data-testid="stDialog"] h2, div[data-testid="stDialog"] h3, 
     div[data-testid="stDialog"] p, div[data-testid="stDialog"] li, div[data-testid="stDialog"] span, div[data-testid="stDialog"] div {
         color: #1E1E1E !important; 
     }
     
-    /* Text sa loob ng Cancel button (Puwersahang Puti) */
-    .stDialog button, div[data-testid="stDialog"] button {
-        color: #FFFFFF !important;
+    /* 🚀 FIX PARA SA LAHAT NG BUTTON TEXT (Kalkulador, Cancel, at Admin Delete Buttons) */
+    button, .stButton button, .stDialog button, div[data-testid="stDialog"] button {
+        color: #FFFFFF !important; /* Puwersahang puti ang kulay ng mga letra sa pindutan */
     }
-    .stDialog button p, div[data-testid="stDialog"] button p {
+    /* Siguraduhing nananatiling puti at makapal ang teksto kahit anong setting ng phone */
+    button p, .stButton button p, .stDialog button p, div[data-testid="stDialog"] button p {
         color: #FFFFFF !important;
         font-weight: bold !important;
     }
     
-    /* Success Toast sa ilalim (Matingkad na Pink na may Puting Text) */
+    /* FIX PARA SA SUCCESS TOAST NOTIFICATION */
     div[data-testid="stToast"], [data-testid="stToast"] > div {
         background-color: #FF69B4 !important; 
         border-radius: 8px !important;
@@ -88,15 +89,13 @@ tab1, tab2 = st.tabs(["📝 Price Calculator", "📊 Price Master List"])
 
 # =========================================================
 # CRITICAL DIRECT SYSTEM CONNECTORS
-# 🚀 PURELY UPDATED ENGINE PARAMETERS
-WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbzKvNDozq_GfNiJ1EMIrYdU3IEYWOXOT22yBh00mGsK4uF5dbGazT0hq4Ul2d5dYnHCuQ/exec"
+WEBHOOK_URL = "https://google.com"
 # =========================================================
 
 # --- HIGH-RELIABILITY LIVE REFRESH DATA ENGINE ---
 def fetch_live_matrix():
     try:
         headers = {"User-Agent": "Mozilla/5.0"}
-        # Kinukuha ang listahan diretso sa bagong doGet function ng script
         response = requests.get(f"{WEBHOOK_URL}?t={int(time.time())}", headers=headers, timeout=12)
         if response.status_code == 200:
             data_json = response.json()
@@ -177,7 +176,6 @@ def confirm_save_dialog():
                 }
                 
                 try:
-                    # Ginagamit ang POST request para i-shoot ang JSON data sa bagong doPost function sa Google
                     response = requests.post(WEBHOOK_URL, json=payload, timeout=15)
                     st.session_state["trigger_reload"] = True
                     st.toast(f"✅ Successfully saved '{prod_name}' directly to your Sheet!")
@@ -245,7 +243,6 @@ with tab2:
         search_query = st.text_input("🔍 Search Product Name...", placeholder="Type to filter list live...")
         
         if search_query.strip():
-            # Apply dynamic string matching filter line tracking live record
             df_display = df_clean[df_clean["Product Name"].str.contains(search_query.strip(), case=False, na=False)]
         else:
             df_display = df_clean.copy()
